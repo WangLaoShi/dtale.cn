@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 
+import { Bouncer } from '../../Bouncer';
 import { ChartObj } from '../../chartUtils';
 import { ColumnDef } from '../../dtale/DataViewerState';
-import { AppState } from '../../redux/state/AppState';
+import { selectDataId } from '../../redux/selectors';
 import { AnalysisParams, AnalysisState, AnalysisType } from '../analysis/ColumnAnalysisState';
 import { dataLoader } from '../analysis/columnAnalysisUtils';
 import DescribeFilters from '../analysis/filters/DescribeFilters';
@@ -12,7 +13,7 @@ import { DetailData, WordValueState } from './DescribeState';
 import DetailsBoxplot from './DetailsBoxplot';
 
 /** Component properties for DetailsCharts */
-interface DetailsChartsProps {
+export interface DetailsChartsProps {
   details: DetailData;
   detailCode?: string;
   cols: ColumnDef[];
@@ -23,8 +24,7 @@ interface DetailsChartsProps {
 }
 
 export const DetailsCharts: React.FC<DetailsChartsProps> = ({ details, detailCode, col, filtered, ...props }) => {
-  const dataId = useSelector((state: AppState) => state.dataId);
-
+  const dataId = useSelector(selectDataId);
   const [cols, setCols] = React.useState([...props.cols]);
   const [dtype, setDtype] = React.useState(props.dtype);
   const [type, setType] = React.useState(AnalysisType.BOXPLOT);
@@ -61,6 +61,7 @@ export const DetailsCharts: React.FC<DetailsChartsProps> = ({ details, detailCod
         }
         props.propagateState(proppedState);
       };
+      setChart(<Bouncer />);
       await dataLoader(
         { chartData: { selectedCol: col }, height: 400, dataId, filtered },
         { chartParams: { type, ...chartParams }, type },

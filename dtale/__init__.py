@@ -10,7 +10,7 @@ with warnings.catch_warnings():
             "\n`import dash_html_components as html` with `from dash import html`"
         ),
     )
-    warnings.filterwarnings("ignore", module="matplotlib\..*")  # noqa: W605
+    warnings.filterwarnings("ignore", module="matplotlib\\..*")  # noqa: W605
 
     dtale = Blueprint("dtale", __name__, url_prefix="/dtale")
 
@@ -18,6 +18,11 @@ with warnings.catch_warnings():
     HIDE_SHUTDOWN = False
     GITHUB_FORK = False
     HIDE_HEADER_EDITOR = False
+    LOCK_HEADER_MENU = False
+    HIDE_HEADER_MENU = False
+    HIDE_MAIN_MENU = False
+    HIDE_COLUMN_MENUS = False
+    ENABLE_CUSTOM_FILTERS = False
 
     # flake8: NOQA
     from dtale.app import show, get_instance, instances, offline_chart  # isort:skip

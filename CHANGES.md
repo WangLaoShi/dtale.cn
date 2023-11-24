@@ -1,5 +1,95 @@
 ## Changelog
 
+### 3.7.0 (2023-10-2)
+* Turn off "Custom Filter" functionality by default
+* [#811](https://github.com/man-group/dtale/issues/811): weekday name function
+
+### 3.6.0 (2023-9-29)
+* [#804](https://github.com/man-group/dtale/issues/804): updated summarize code to string join using a pipe instead of comma
+* [#805](https://github.com/man-group/dtale/issues/805): allow D-Tale to be run under HTTPS
+* [#803](https://github.com/man-group/dtale/issues/803): Frequency Table
+
+### 3.5.0 (2023-9-14)
+* [#796](https://github.com/man-group/dtale/issues/796): option to hide ribbon n & column menus
+* [#797](https://github.com/man-group/dtale/issues/797): added 'Counts & Percentages' summarize function
+* [#800](https://github.com/man-group/dtale/issues/800): heatmap locked column fix
+* [#798](https://github.com/man-group/dtale/issues/798): added 'Duplicate' function to column menu
+
+### 3.4.0 (2023-9-5)
+* [#792](https://github.com/man-group/dtale/issues/792): adding in percentage to 'Value Counts' describe chart
+* [#788](https://github.com/man-group/dtale/issues/788): fix for when column names have a pipe character
+* [#786](https://github.com/man-group/dtale/issues/786): updates to shutdown
+* update to AcrticDB `get_num_rows` handling
+
+### 3.3.0 (2023-7-19)
+* [#779](https://github.com/man-group/dtale/issues/779): dtale.show(background_mode) not working
+* [#778](https://github.com/man-group/dtale/issues/778): Bump matplotlib to >=3.7.0
+* dependency upgrades
+
+### 3.2.0 (2023-7-5)
+* [#773](https://github.com/man-group/dtale/issues/773): creating a comma-separated string of values from a GroupBy
+* [#771](https://github.com/man-group/dtale/issues/771): Support for Python 3.11
+ 
+### 3.1.7 (2023-6-29)
+* Fixes for ArcticDB date filtering
+
+### 3.1.6 (2023-6-28)
+* Added support to `/dtale/data/` endpoint for ArcticDB instances hosted using gunicorn
+
+### 3.1.0 (2023-6-23)
+* Added handling for ArcticDB locations with high libraries & symbols
+* Added handling for wide dataframes
+* Allowed ArcticDB data paths to passed in from URLs
+
+### 3.0.0 (2023-6-9)
+* Added support for ArcticDB as the storage mechanism for pandas dataframes
+
+### 2.16.0 (2023-5-16)
+* [#759](https://github.com/man-group/dtale/issues/759): freeze header menu option
+* Updated data_id storage to use strings rather than numbers
+* Fixed bug where calling 'cleanup' didn't cleanup instance name reference
+
+### 2.15.2 (2023-5-1)
+* tweaked requirements for older versions of python
+
+### 2.15.1 (2023-4-29)
+* updates to how app's _override_routes rebuilds url_map
+* requirement tweaks to werkzeug
+
+### 2.15.0 (2023-4-28)
+* [#490](https://github.com/man-group/dtale/issues/490): stratified random sample in charts
+* Updated sklearn column_builders to handle import failures
+
+### 2.14.4 (2023-4-19)
+* Added dataclasses requirement for python environments >= 3.6 and < 3.7
+
+### 2.14.3 (2023-4-19)
+* backwards compatability for pandas `string` dtype and tests
+
+### 2.14.2 (2023-4-18)
+* removed extraneous dependency `soupsieve`
+
+### 2.14.1 (2023-4-17)
+* update requirements to no longer pin and allow for older versions of packages
+* update unit tests to allow for backwards compatibility with older versions of mock library
+* update how `Flask.url_for` is detected rather than pinning to specific version of python
+* separated black & Flake8 code formatting checks into own job in CircleCI
+
+### 2.14.0 (2023-4-10)
+* [#748](https://github.com/man-group/dtale/issues/748): update auto-generated column deletion code
+* [#746](https://github.com/man-group/dtale/issues/746): editing cells while filtering
+* [#743](https://github.com/man-group/dtale/issues/743): passing a list of columns to 'allow_cell_edits'
+* [#742](https://github.com/man-group/dtale/issues/742): custom edit options bug
+* updates for pandas 2.0.0
+* bump redis & replace node-sass with sass
+
+### 2.13.0 (2023-3-3)
+* [#685](https://github.com/man-group/dtale/issues/685): Histogram chart builder
+* [#730](https://github.com/man-group/dtale/issues/730): fix for exporting charts with multiple y-axis
+
+### 2.12.3 (2023-2-22)
+* Updated D-Tale streamlit startup command to have a wider exception handler for importing `streamlit.server`
+
 ### 2.12.2 (2023-2-7)
 * [#726](https://github.com/man-group/dtale/issues/726): updated `global_state.set_app_settings` to persist updates to instance settings
 

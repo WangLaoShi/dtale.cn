@@ -34,9 +34,9 @@ describe('DataViewer iframe tests', () => {
     window.open = openSpy;
     (window as any).top = { location: { href: 'http://test.com' } };
     (window as any).self = { location: { href: 'http://test/dtale/iframe' } };
-    jest.mock('@blueprintjs/datetime2', () => {
+    jest.mock('@blueprintjs/datetime', () => {
       const { createMockComponent } = require('../mocks/createMockComponent');
-      return { DateInput2: createMockComponent('DateInput2') };
+      return { DateInput: createMockComponent('DateInput') };
     });
   });
 
@@ -103,6 +103,7 @@ describe('DataViewer iframe tests', () => {
       'Hide',
       'Delete',
       'Rename',
+      'Duplicate',
       'Replacements',
       'Type Conversion',
       'Duplicates',

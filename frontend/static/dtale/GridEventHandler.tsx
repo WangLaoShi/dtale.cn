@@ -1,3 +1,4 @@
+import { createSelector } from '@reduxjs/toolkit';
 import * as React from 'react';
 import { withTranslation, WithTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -13,10 +14,11 @@ import {
   ShowRibbonMenuAction,
 } from '../redux/actions/AppActions';
 import * as chartActions from '../redux/actions/charts';
-import { AppState, Popups, PopupType, RangeState } from '../redux/state/AppState';
+import * as selectors from '../redux/selectors';
+import { Popups, PopupType, RangeState } from '../redux/state/AppState';
 
 import { ColumnDef, DataViewerData, StringColumnFormat } from './DataViewerState';
-import { convertCellIdxToCoords, getCell } from './gridUtils';
+import { convertCellIdxToCoords, getCell, isCellEditable } from './gridUtils';
 import { MeasureText } from './MeasureText';
 import { MenuTooltip } from './menu/MenuTooltip';
 import { buildCopyText, buildRangeState, buildRowCopyText, CopyText, toggleSelection } from './rangeSelectUtils';
@@ -30,6 +32,61 @@ export interface GridEventHandlerProps {
   columns: ColumnDef[];
   data: DataViewerData;
 }
+
+const selectResult = createSelector(
+  [
+    selectors.selectAllowCellEdits,
+    selectors.selectDataId,
+    selectors.selectBaseRibbonMenuOpen,
+    selectors.selectMenuPinned,
+    selectors.selectRibbonDropdownVisible,
+    selectors.selectSidePanelVisible,
+    selectors.selectSidePanelView,
+    selectors.selectSidePanelOffset,
+    selectors.selectDragResize,
+    selectors.selectRangeSelect,
+    selectors.selectRowRange,
+    selectors.selectCtrlRows,
+    selectors.selectSettings,
+    selectors.selectLockHeaderMenu,
+    selectors.selectHideHeaderMenu,
+    selectors.selectIsArcticDB,
+  ],
+  (
+    allowCellEdits,
+    dataId,
+    ribbonMenuOpen,
+    menuPinned,
+    ribbonDropdownOpen,
+    sidePanelOpen,
+    sidePanel,
+    sidePanelOffset,
+    dragResize,
+    rangeSelect,
+    rowRange,
+    ctrlRows,
+    settings,
+    lockHeaderMenu,
+    hideHeaderMenu,
+    isArcticDB,
+  ) => ({
+    allowCellEdits: allowCellEdits && !isArcticDB,
+    dataId,
+    menuPinned,
+    ribbonMenuOpen,
+    ribbonDropdownOpen,
+    sidePanelOpen,
+    sidePanel,
+    sidePanelOffset,
+    dragResize,
+    rangeSelect,
+    rowRange,
+    ctrlRows,
+    settings,
+    lockHeaderMenu,
+    hideHeaderMenu,
+  }),
+);
 
 const GridEventHandler: React.FC<React.PropsWithChildren<GridEventHandlerProps & WithTranslation>> = ({
   columns,
@@ -51,21 +108,9 @@ const GridEventHandler: React.FC<React.PropsWithChildren<GridEventHandlerProps &
     rowRange,
     ctrlRows,
     settings,
-  } = useSelector((state: AppState) => ({
-    allowCellEdits: state.allowCellEdits,
-    dataId: state.dataId,
-    ribbonMenuOpen: state.ribbonMenuOpen,
-    menuPinned: state.menuPinned,
-    ribbonDropdownOpen: state.ribbonDropdown.visible,
-    sidePanelOpen: state.sidePanel.visible,
-    sidePanel: state.sidePanel.view,
-    sidePanelOffset: state.sidePanel.offset,
-    dragResize: state.dragResize,
-    rangeSelect: state.rangeSelect,
-    rowRange: state.rowRange,
-    ctrlRows: state.ctrlRows,
-    settings: state.settings,
-  }));
+    lockHeaderMenu,
+    hideHeaderMenu,
+  } = useSelector(selectResult);
   const dispatch = useDispatch();
   const openChart = (chartData: Popups): OpenChartAction => dispatch(chartActions.openChart(chartData));
   const editCell = (editedCell: string): EditedCellAction => dispatch({ type: ActionType.EDIT_CELL, editedCell });
@@ -157,6 +202,9 @@ const GridEventHandler: React.FC<React.PropsWithChildren<GridEventHandlerProps &
   };
 
   React.useEffect(() => {
+    if (lockHeaderMenu || hideHeaderMenu) {
+      return;
+    }
     if (currY !== undefined && currY <= 5) {
       if (hideTimeout.current) {
         clearTimeout(hideTimeout.current);
@@ -232,7 +280,9 @@ const GridEventHandler: React.FC<React.PropsWithChildren<GridEventHandlerProps &
       return;
     }
 
-    if (allowCellEdits) {
+    const coords = convertCellIdxToCoords(cellIdx);
+    const clickedCol = columns.find((c) => c.index + 1 === coords[0]);
+    if (isCellEditable(allowCellEdits, clickedCol)) {
       if (clickTimeout.current === null) {
         clickTimeout.current = setTimeout(() => {
           if (clickTimeout.current) {

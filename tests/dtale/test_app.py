@@ -7,10 +7,9 @@ import mock
 import numpy as np
 import os
 import pandas as pd
-import pandas.util.testing as pdt
 import pytest
 
-from tests import ExitStack
+from tests import ExitStack, pdt
 
 
 @pytest.mark.unit
@@ -198,6 +197,9 @@ def test_show(unittest):
         instance3 = get_instance("its_here")
         assert instance3._url == instance._url
         pdt.assert_frame_equal(instance3.data, test_data)
+        instance3.cleanup()
+
+        assert "Its Here" not in global_state._default_store._data_names
 
     with ExitStack() as stack:
         mock_run = stack.enter_context(
@@ -220,8 +222,9 @@ def test_show(unittest):
             force=True,
             debug=True,
             ignore_duplicate=True,
+            ssl_context="adhoc",
         )
-        assert "http://localhost:9999" == instance._url
+        assert "https://localhost:9999" == instance._url
         mock_run.assert_called_once()
         mock_find_free_port.assert_not_called()
         mock_data_loader.assert_called_once()
@@ -418,7 +421,7 @@ def test_open_browser():
         )
         mock_run.assert_not_called()
         mock_webbrowser.assert_called()
-        assert mock_webbrowser.mock_calls[0].args[
+        assert mock_webbrowser.call_args[0][
             0
         ] == "http://localhost:9999/dtale/main/{}".format(instance._data_id)
         mock_browser_proc.reset_mock()
@@ -431,7 +434,7 @@ def test_open_browser():
         )
         instance.open_browser()
         mock_browser_proc.assert_called()
-        assert mock_browser_proc.mock_calls[0].args[0][
+        assert mock_browser_proc.call_args[0][0][
             1
         ] == "http://localhost:9999/dtale/main/{}".format(instance._data_id)
         mock_browser_proc.reset_mock()
@@ -443,7 +446,7 @@ def test_open_browser():
 
         instance.open_browser()
         mock_browser_proc.assert_called()
-        assert mock_browser_proc.mock_calls[0].args[0][
+        assert mock_browser_proc.call_args[0][0][
             1
         ] == "http://localhost:9999/dtale/main/{}".format(instance._data_id)
         mock_browser_proc.reset_mock()
@@ -455,7 +458,7 @@ def test_open_browser():
 
         instance.open_browser()
         mock_webbrowser.assert_called()
-        assert mock_webbrowser.mock_calls[0].args[
+        assert mock_webbrowser.call_args[0][
             0
         ] == "http://localhost:9999/dtale/main/{}".format(instance._data_id)
 

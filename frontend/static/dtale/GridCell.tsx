@@ -1,10 +1,11 @@
+import { createSelector } from '@reduxjs/toolkit';
 import * as React from 'react';
 import { withTranslation, WithTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Checkbox } from '../popups/create/LabeledCheckbox';
 import { ActionType, HideMenuTooltipAction, ShowMenuTooltipAction } from '../redux/actions/AppActions';
-import { AppState } from '../redux/state/AppState';
+import * as selectors from '../redux/selectors';
 
 import * as bu from './backgroundUtils';
 import { ColumnDef, DataRecord, DataViewerData, DataViewerPropagateState, StringColumnFormat } from './DataViewerState';
@@ -24,9 +25,49 @@ export interface GridCellProps {
   min?: number;
   max?: number;
   propagateState: DataViewerPropagateState;
+  loading: boolean;
 }
 
+const selectResult = createSelector(
+  [
+    selectors.selectEditedCell,
+    selectors.selectAllowCellEdits,
+    selectors.selectIsArcticDB,
+    selectors.selectSettings,
+    selectors.selectRowRange,
+    selectors.selectColumnRange,
+    selectors.selectRangeSelect,
+    selectors.selectCtrlRows,
+    selectors.selectCtrlCols,
+    selectors.selectSelectedRow,
+  ],
+  (
+    editedCell,
+    allowCellEdits,
+    isArcticDB,
+    settings,
+    rowRange,
+    columnRange,
+    rangeSelect,
+    ctrlRows,
+    ctrlCols,
+    selectedRow,
+  ) => ({
+    editedCell,
+    allowCellEdits,
+    isArcticDB,
+    settings,
+    rowRange,
+    columnRange,
+    rangeSelect,
+    ctrlRows,
+    ctrlCols,
+    selectedRow,
+  }),
+);
+
 const GridCell: React.FC<GridCellProps & WithTranslation> = ({
+  loading,
   columnIndex,
   rowIndex,
   style,
@@ -38,7 +79,7 @@ const GridCell: React.FC<GridCellProps & WithTranslation> = ({
   propagateState,
   t,
 }) => {
-  const { editedCell, allowCellEdits, settings, ...rangeState } = useSelector((state: AppState) => state);
+  const { editedCell, allowCellEdits, isArcticDB, settings, ...rangeState } = useSelector(selectResult);
   const dispatch = useDispatch();
   const showTooltip = (element: HTMLElement, content: React.ReactNode): ShowMenuTooltipAction =>
     dispatch({ type: ActionType.SHOW_MENU_TOOLTIP, element, content });
@@ -53,6 +94,7 @@ const GridCell: React.FC<GridCellProps & WithTranslation> = ({
   if (rowIndex === 0) {
     return (
       <Header
+        loading={loading}
         columnIndex={columnIndex}
         style={style}
         columns={columns}
@@ -64,7 +106,7 @@ const GridCell: React.FC<GridCellProps & WithTranslation> = ({
 
   const buildCellClassName = (): string => {
     const classes = ['cell'];
-    if (allowCellEdits) {
+    if (!isArcticDB && gu.isCellEditable(allowCellEdits, colCfg)) {
       classes.push('editable');
     }
     if (isInRange(columnIndex, rowIndex, rangeState)) {
@@ -105,7 +147,7 @@ const GridCell: React.FC<GridCellProps & WithTranslation> = ({
   let value: React.ReactNode = '-';
   // wide strings need to be displayed to the left so they are easier to read
   let valueStyle: React.CSSProperties =
-    (style.width ?? 0) > 350 && gu.isStringCol(colCfg?.dtype) ? { textAlign: 'left' } : {};
+    (style.width ?? (0 as any)) > 350 && gu.isStringCol(colCfg?.dtype) ? { textAlign: 'left' } : {};
   const divProps: React.HTMLAttributes<HTMLDivElement> = {};
   let className = buildCellClassName();
   if (colCfg?.name) {

@@ -23,6 +23,7 @@ from dtale.charts.utils import (
     find_group_vals,
 )
 from dtale.column_builders import get_cleaner_configs
+from dtale.constants import CHART_JOINER_CHAR
 from dtale.dash_application.layout.utils import (
     build_input,
     build_option,
@@ -225,6 +226,7 @@ CHARTS = [
 if has_dashbio():
     CHARTS.append(dict(value="clustergram"))
 CHARTS.append(dict(value="pareto"))
+CHARTS.append(dict(value="histogram"))
 
 CHART_INPUT_SETTINGS = {
     "line": dict(
@@ -331,8 +333,20 @@ CHART_INPUT_SETTINGS = {
         funnel_group=dict(display=False),
         clustergram_group=dict(display=False),
     ),
+    "histogram": dict(
+        x=dict(display=False),
+        y=dict(display=False),
+        z=dict(display=False),
+        group=dict(display=False),
+        map_group=dict(display=False),
+        cs_group=dict(display=False),
+        treemap_group=dict(display=False),
+        funnel_group=dict(display=False),
+        clustergram_group=dict(display=False),
+        histogram_group=dict(display=True),
+    ),
 }
-LOAD_TYPES = ["random", "head", "tail"]
+LOAD_TYPES = ["random", "head", "tail", "stratified"]
 MAP_TYPES = [
     dict(value="choropleth", image=True),
     dict(value="scattergeo", label="ScatterGeo", image=True),
@@ -375,7 +389,7 @@ def load_type_msg():
             [
                 html.H3(
                     text("Load Types"), style=dict(display="inline"), className="pr-3"
-                ),
+                )
             ]
         ),
         html.Ul(
@@ -388,16 +402,17 @@ def load_type_msg():
                     className="mb-0",
                 ),
                 html.Li(
-                    [
-                        html.B(text("Head")),
-                        html.Span(": {}".format(text("load_head"))),
-                    ],
+                    [html.B(text("Head")), html.Span(": {}".format(text("load_head")))],
+                    className="mb-0",
+                ),
+                html.Li(
+                    [html.B(text("Tail")), html.Span(": {}".format(text("load_tail")))],
                     className="mb-0",
                 ),
                 html.Li(
                     [
-                        html.B(text("Tail")),
-                        html.Span(": {}".format(text("load_tail"))),
+                        html.B(text("Stratified")),
+                        html.Span(": {}".format(text("load_stratified"))),
                     ],
                     className="mb-0",
                 ),
@@ -647,7 +662,7 @@ def get_group_types(inputs, group_cols=None):
                         return ["groups", "bins"]
                     return ["groups"]
             for fgc in final_group_cols:
-                col, freq = fgc.split("|")
+                col, freq = fgc.split(CHART_JOINER_CHAR)
                 col_exists = (
                     next(
                         (
@@ -686,23 +701,23 @@ def update_label_for_freq_and_agg(val):
     """
     Formats sub-values contained within 'val' to display date frequencies & aggregatioms if included.
         - (val=['a', 'b', 'c']) => 'a, b, c'
-        - (val=['a|H', 'b|mean', 'c']) => 'a (Hour), Mean of b, c'
+        - (val=['a||H', 'b||mean', 'c']) => 'a (Hour), Mean of b, c'
     """
 
     def _freq_handler(sub_val):
         selected_agg = None
         for agg in AGGS:
-            if sub_val.endswith("|{}".format(agg)):
+            if sub_val.endswith("{}{}".format(CHART_JOINER_CHAR, agg)):
                 selected_agg = "{} of".format(text(AGGS[agg]))
-                sub_val = sub_val.split("|{}".format(agg))[0]
+                sub_val = sub_val.split("{}{}".format(CHART_JOINER_CHAR, agg))[0]
                 break
 
         selected_freq = None
         for freq in FREQS:
-            if sub_val.endswith("|{}".format(freq)):
-                col, freq = sub_val.split("|")
+            if sub_val.endswith("{}{}".format(CHART_JOINER_CHAR, freq)):
+                col, freq = sub_val.split(CHART_JOINER_CHAR)
                 if freq in FREQS:
-                    sub_val = sub_val.split("|{}".format(freq))[0]
+                    sub_val = sub_val.split("{}{}".format(CHART_JOINER_CHAR, freq))[0]
                     if freq in FREQ_LABELS:
                         selected_freq = "({})".format(text(FREQ_LABELS[freq]))
                     break
@@ -781,6 +796,7 @@ def build_input_options(df, extended_aggregation=[], **inputs):
         group_options,
         barsort_options,
         yaxis_options,
+        [build_option(c, l) for c, l in col_opts],
     )
 
 
@@ -919,10 +935,7 @@ def build_dropna(dropna, prop=None):
         checkbox_kwargs[bootstrap_checkbox_prop()] = True if dropna is None else dropna
         return build_input(
             text("Dropna"),
-            html.Div(
-                dbc.Checkbox(**checkbox_kwargs),
-                className="checkbox-wrapper",
-            ),
+            html.Div(dbc.Checkbox(**checkbox_kwargs), className="checkbox-wrapper"),
             className="col-auto",
             id="{}-dropna-input".format(prop) if prop is not None else "dropna-input",
         )
@@ -1014,10 +1027,7 @@ def build_funnel_inputs(inputs, df, group_options):
     stacked_toggle = build_input(
         "{}?".format(text("Stack")),
         html.Div(
-            daq.BooleanSwitch(
-                id="funnel-stack-toggle",
-                on=False,
-            ),
+            daq.BooleanSwitch(id="funnel-stack-toggle", on=False),
             className="toggle-wrapper",
         ),
         id="funnel-stack-input",
@@ -1030,7 +1040,7 @@ def build_funnel_inputs(inputs, df, group_options):
     )
 
 
-def build_pareto_options(df, x=None, bars=None, line=None):
+def get_num_cols(df):
     dtypes = get_dtypes(df)
     cols = sorted(dtypes.keys())
     num_cols = []
@@ -1039,6 +1049,13 @@ def build_pareto_options(df, x=None, bars=None, line=None):
         classification = classify_type(dtype)
         if classification in ["F", "I"]:
             num_cols.append(c)
+    return num_cols
+
+
+def build_pareto_options(df, x=None, bars=None, line=None):
+    dtypes = get_dtypes(df)
+    cols = sorted(dtypes.keys())
+    num_cols = get_num_cols(df)
 
     x_options = [build_option(c) for c in cols if c not in [bars, line]]
     bars_options = [build_option(c) for c in num_cols if c not in [x, line]]
@@ -1060,10 +1077,7 @@ def build_pareto_inputs(inputs, df, group_options):
     return html.Div(
         [
             build_input(
-                [
-                    html.Div(text("X")),
-                    html.Small("({})".format(text("Agg By"))),
-                ],
+                [html.Div(text("X")), html.Small("({})".format(text("Agg By")))],
                 dcc.Dropdown(
                     id="pareto-x-dropdown",
                     options=x_options,
@@ -1130,6 +1144,68 @@ def build_pareto_inputs(inputs, df, group_options):
             build_dropna(dropna, "pareto"),
         ],
         id="pareto-inputs",
+        style={} if show_inputs else {"display": "none"},
+        className="row p-0 charts-filters",
+    )
+
+
+def build_histogram_inputs(inputs, df, group_options):
+    show_inputs = inputs.get("chart_type") == "histogram"
+    col, histogram_type, bins, group = (
+        inputs.get("histogram_{}".format(prop))
+        for prop in ["col", "type", "bins", "group"]
+    )
+    col_options = get_num_cols(df)
+
+    return html.Div(
+        [
+            build_input(
+                text("Col"),
+                dcc.Dropdown(
+                    id="histogram-col-dropdown",
+                    options=col_options,
+                    value=col,
+                    style=dict(width="inherit"),
+                ),
+            ),
+            dcc.Tabs(
+                id="histogram-type-tabs",
+                value=histogram_type or "bins",
+                children=[
+                    build_tab(text("Bins"), "bins"),
+                    build_tab(text("Density"), "density"),
+                ],
+                style=dict(height="36px", width="10em"),
+            ),
+            build_input(
+                text("Bins"),
+                dcc.Input(
+                    id="histogram-bins-input",
+                    type="number",
+                    placeholder=text("Enter Bins"),
+                    className="form-control text-center",
+                    style={"lineHeight": "inherit"},
+                    value=bins or 5,
+                ),
+                id="histogram-bins-div",
+                className="col-md-1 pr-0",
+                style={} if histogram_type == "bins" else {"display": "none"},
+            ),
+            build_input(
+                text("Group"),
+                dcc.Dropdown(
+                    id="histogram-group-dropdown",
+                    options=group_options,
+                    multi=True,
+                    placeholder=text("Select Group(s)"),
+                    value=group,
+                    style=dict(width="inherit"),
+                ),
+                className="col",
+                id="histogram-group-input",
+            ),
+        ],
+        id="histogram-inputs",
         style={} if show_inputs else {"display": "none"},
         className="row p-0 charts-filters",
     )
@@ -1259,7 +1335,8 @@ def build_group_val_options(df, group_cols):
     group_vals = find_group_vals(df, group_cols)
     return [
         build_option(
-            json.dumps(gv), "|".join([str(gv.get(p, "NaN")) for p in group_cols])
+            json.dumps(gv),
+            CHART_JOINER_CHAR.join([str(gv.get(p, "NaN")) for p in group_cols]),
         )
         for gv in group_vals
     ]
@@ -1332,10 +1409,12 @@ def build_slider_counts(df, data_id, query_value):
         )
     )
     slider_counts = {
-        v * 20: {"label": "{}% ({:,.0f})".format(v * 20, (v * 2) / 10 * record_ct)}
+        "{}".format(v * 20): {
+            "label": "{}% ({:,.0f})".format(v * 20, (v * 2) / 10 * record_ct)
+        }
         for v in range(1, 6)
     }
-    slider_counts[100]["style"] = {"white-space": "nowrap"}
+    slider_counts["100"]["style"] = {"white-space": "nowrap"}
     return slider_counts
 
 
@@ -1355,7 +1434,7 @@ def charts_layout(df, settings, **inputs):
     :type param: dict
     :return: dash markup
     """
-    chart_type, x, y, z, group, dropna, agg, load, load_type = (
+    chart_type, x, y, z, group, dropna, agg, load, load_type, stratified_group = (
         inputs.get(p)
         for p in [
             "chart_type",
@@ -1367,6 +1446,7 @@ def charts_layout(df, settings, **inputs):
             "agg",
             "load",
             "load_type",
+            "stratified_group",
         ]
     )
     loc_modes = loc_mode_info()
@@ -1388,6 +1468,7 @@ def charts_layout(df, settings, **inputs):
         group_options,
         barsort_options,
         yaxis_options,
+        stratified_groups,
     ) = options
     query_placeholder = "{} (ex: col1 == 1)".format(text("Enter pandas query"))
     query_value = inputs.get("query") or inner_build_query(
@@ -1525,6 +1606,20 @@ def charts_layout(df, settings, **inputs):
                 ]
             },
         ),
+        dcc.Store(
+            id="histogram-input-data",
+            data={
+                k: v
+                for k, v in inputs.items()
+                if k
+                in [
+                    "histogram_col",
+                    "histogram_type",
+                    "histogram_bins",
+                    "histogram_group",
+                ]
+            },
+        ),
         dcc.Store(id="range-data"),
         dcc.Store(id="yaxis-data", data=inputs.get("yaxis")),
         dcc.Store(id="last-chart-input-data", data=inputs),
@@ -1591,7 +1686,7 @@ def charts_layout(df, settings, **inputs):
                             for i, t in enumerate(CHARTS)
                         ],
                         style=dict(height="36px"),
-                    ),
+                    )
                 ]
                 + [
                     dbc.Tooltip(
@@ -1646,6 +1741,15 @@ def charts_layout(df, settings, **inputs):
                                 value=load_type or "random",
                                 clearable=False,
                             ),
+                            dcc.Dropdown(
+                                id="stratified-group-dropdown",
+                                options=stratified_groups,
+                                value=stratified_group,
+                                clearable=False,
+                                style={}
+                                if load_type == "stratified"
+                                else {"display": "none"},
+                            ),
                             dcc.Slider(
                                 id="load-input",
                                 min=10,
@@ -1656,10 +1760,7 @@ def charts_layout(df, settings, **inputs):
                                 marks=build_slider_counts(
                                     df, inputs["data_id"], query_value
                                 ),
-                                tooltip={
-                                    "always_visible": False,
-                                    "placement": "left",
-                                },
+                                tooltip={"always_visible": False, "placement": "left"},
                             ),
                         ],
                         className="input-group mr-3",
@@ -1700,7 +1801,7 @@ def charts_layout(df, settings, **inputs):
                                     placeholder=text("Select Cleaner(s)"),
                                     value=group,
                                     style=dict(width="inherit"),
-                                ),
+                                )
                             )
                         ),
                         id="collapse-cleaners",
@@ -1732,6 +1833,7 @@ def charts_layout(df, settings, **inputs):
                                         style=dict(width="inherit"),
                                     ),
                                     label_class="input-group-addon d-block pt-1 pb-0",
+                                    style=show_style(show_input("x")),
                                 ),
                                 build_input(
                                     text("Y"),
@@ -1815,8 +1917,7 @@ def charts_layout(df, settings, **inputs):
                                                     id="map-loc-mode-dropdown",
                                                     options=[
                                                         build_option(
-                                                            v,
-                                                            loc_modes[v].get("label"),
+                                                            v, loc_modes[v].get("label")
                                                         )
                                                         for v in [
                                                             "ISO-3",
@@ -2055,6 +2156,7 @@ def charts_layout(df, settings, **inputs):
                             all_option=True,
                         ),
                         build_pareto_inputs(inputs, df, group_options),
+                        build_histogram_inputs(inputs, df, group_options),
                         html.Div(
                             [
                                 html.Div(
@@ -2115,7 +2217,7 @@ def charts_layout(df, settings, **inputs):
                                             className="ext-agg-warning",
                                         ),
                                     ]
-                                ),
+                                )
                             ]
                             + extended_aggregations.build_modal(
                                 inputs.get("extended_aggregation", []), chart_type, y
@@ -2184,8 +2286,7 @@ def charts_layout(df, settings, **inputs):
                                     text("Drilldowns"),
                                     html.Div(
                                         daq.BooleanSwitch(
-                                            id="drilldown-toggle",
-                                            on=False,
+                                            id="drilldown-toggle", on=False
                                         ),
                                         className="toggle-wrapper",
                                     ),
@@ -2195,6 +2296,10 @@ def charts_layout(df, settings, **inputs):
                                 ),
                             ],
                             className="row pt-3 pb-3 charts-filters",
+                            id="charts-filters-div",
+                            style={"display": "none"}
+                            if chart_type == "histogram"
+                            else {},
                         ),
                     ],
                     id="main-inputs",
@@ -2332,8 +2437,7 @@ def charts_layout(df, settings, **inputs):
                     text("Chart Per\nGroup"),
                     html.Div(
                         daq.BooleanSwitch(
-                            id="cpg-toggle",
-                            on=inputs.get("cpg") or False,
+                            id="cpg-toggle", on=inputs.get("cpg") or False
                         ),
                         className="toggle-wrapper",
                     ),
@@ -2345,8 +2449,7 @@ def charts_layout(df, settings, **inputs):
                     text("Chart Per\nY"),
                     html.Div(
                         daq.BooleanSwitch(
-                            id="cpy-toggle",
-                            on=inputs.get("cpy") or False,
+                            id="cpy-toggle", on=inputs.get("cpy") or False
                         ),
                         className="toggle-wrapper",
                     ),
@@ -2358,10 +2461,7 @@ def charts_layout(df, settings, **inputs):
                     text("Trendline"),
                     dcc.Dropdown(
                         id="trendline-dropdown",
-                        options=[
-                            build_option("ols"),
-                            build_option("lowess"),
-                        ],
+                        options=[build_option("ols"), build_option("lowess")],
                         value=inputs.get("trendline"),
                     ),
                     className="col-auto addon-min-width",
@@ -2410,10 +2510,7 @@ def charts_layout(df, settings, **inputs):
                 html.Div(
                     html.Div(
                         [
-                            html.Span(
-                                text("Y-Axis"),
-                                className="input-group-addon",
-                            ),
+                            html.Span(text("Y-Axis"), className="input-group-addon"),
                             html.Div(
                                 [
                                     dcc.Tabs(
@@ -2432,10 +2529,7 @@ def charts_layout(df, settings, **inputs):
                                 className="form-control col-auto pt-3",
                                 style=yaxis_type_style,
                             ),
-                            dcc.Dropdown(
-                                id="yaxis-dropdown",
-                                options=yaxis_options,
-                            ),
+                            dcc.Dropdown(id="yaxis-dropdown", options=yaxis_options),
                             html.Span(
                                 "{}:".format(text("Min")),
                                 className="input-group-addon col-auto",
@@ -2480,8 +2574,7 @@ def charts_layout(df, settings, **inputs):
                     text("Animate"),
                     html.Div(
                         daq.BooleanSwitch(
-                            id="animate-toggle",
-                            on=inputs.get("animate") or False,
+                            id="animate-toggle", on=inputs.get("animate") or False
                         ),
                         className="toggle-wrapper",
                     ),
@@ -2515,9 +2608,7 @@ def charts_layout(df, settings, **inputs):
                     ),
                     html.Div(
                         daq.BooleanSwitch(
-                            id="auto-load-toggle",
-                            on=True,
-                            color="green",
+                            id="auto-load-toggle", on=True, color="green"
                         ),
                         className="toggle-wrapper",
                     ),
@@ -2558,7 +2649,8 @@ def charts_layout(df, settings, **inputs):
             id="chart-inputs",
         ),
         dcc.Loading(
-            html.Div(id="chart-content", style={"max-height": "69vh"}), type="circle"
+            html.Div(id="chart-content", style={"height": "calc(100vh - 380px"}),
+            type="circle",
         ),
         dcc.Textarea(id="copy-text", style=dict(position="absolute", left="-110%")),
     ]

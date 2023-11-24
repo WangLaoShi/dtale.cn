@@ -89,4 +89,14 @@ describe('RibbonMenu', () => {
     expect(title).toHaveClass('title-font-base');
     expect(title).toHaveStyle({ 'font-family': 'Arial' });
   });
+
+  it('shows menu when lock_header_menu is true', async () => {
+    await buildMock({ lockHeaderMenu: 'True' });
+    expect(wrapper.container.getElementsByClassName('ribbon-menu-item')).toHaveLength(5);
+  });
+
+  it('hides menu when hide_header_menu is true', async () => {
+    await buildMock({ hideHeaderMenu: 'True' });
+    expect(wrapper.container.getElementsByClassName('ribbon-menu-content')).toHaveLength(0);
+  });
 });

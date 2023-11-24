@@ -144,6 +144,8 @@ export enum PopupType {
   CHARTS = 'charts',
   DESCRIBE = 'describe',
   EXPORT = 'export',
+  ARCTICDB = 'arcticdb',
+  JUMP_TO_COLUMN = 'jump_to_column',
 }
 
 /** Configuration for any data for a popup */
@@ -203,6 +205,11 @@ export interface ExportPopupData extends PopupData<typeof PopupType.EXPORT> {
 
 /** Popup configuration for Error popup */
 export interface RenamePopupData extends PopupData<typeof PopupType.RENAME>, HasColumnSelection {
+  columns: ColumnDef[];
+}
+
+/** Popup configuration for JumpToColumn popup */
+export interface JumpToColumnPopupData extends PopupData<typeof PopupType.JUMP_TO_COLUMN> {
   columns: ColumnDef[];
 }
 
@@ -287,6 +294,9 @@ export type CustomFilterPopupData = PopupData<typeof PopupType.FILTER>;
 /** Popup configuration for Upload popup */
 export type UploadPopupData = PopupData<typeof PopupType.UPLOAD>;
 
+/** Popup configuration for ArcticDB popup */
+export type ArcticDBPopupData = PopupData<typeof PopupType.ARCTICDB>;
+
 /** Popup configuration for Replacement popup */
 export interface ReplacementPopupData extends PopupData<typeof PopupType.REPLACEMENT>, HasColumnSelection {
   propagateState: DataViewerPropagateState;
@@ -327,7 +337,9 @@ export type Popups =
   | CreateTypeConversionPopupData
   | CreateCleanersPopupData
   | InstancesPopupData
-  | ExportPopupData;
+  | ExportPopupData
+  | ArcticDBPopupData
+  | JumpToColumnPopupData;
 
 /** Sort directions */
 export enum SortDir {
@@ -346,7 +358,7 @@ export interface PredefinedFilterValue extends HasActivation {
 /** Settings available to each instance (piece of data) of D-Tale */
 export interface InstanceSettings {
   locked?: string[];
-  allow_cell_edits: boolean;
+  allow_cell_edits: boolean | string[];
   precision: number;
   columnFormats?: Record<string, ColumnFormat>;
   backgroundMode?: string;
@@ -365,6 +377,12 @@ export interface InstanceSettings {
   hide_shutdown: boolean;
   column_edit_options?: Record<string, string[]>;
   hide_header_editor: boolean;
+  lock_header_menu: boolean;
+  hide_header_menu: boolean;
+  hide_main_menu: boolean;
+  hide_column_menus: boolean;
+  isArcticDB?: number;
+  enable_custom_filters: boolean;
 }
 
 export const BASE_INSTANCE_SETTINGS: InstanceSettings = Object.freeze({
@@ -374,6 +392,11 @@ export const BASE_INSTANCE_SETTINGS: InstanceSettings = Object.freeze({
   verticalHeaders: false,
   predefinedFilters: {},
   hide_header_editor: false,
+  lock_header_menu: false,
+  hide_header_menu: false,
+  hide_main_menu: false,
+  hide_column_menus: false,
+  enable_custom_filters: false,
 });
 
 /** Type definition for semantic versioning of python */
@@ -397,11 +420,14 @@ export interface AppSettings {
   openCustomFilterOnStartup: boolean;
   openPredefinedFiltersOnStartup: boolean;
   hideDropRows: boolean;
-  allowCellEdits: boolean;
+  allowCellEdits: boolean | string[];
   theme: ThemeType;
   language: string;
   pythonVersion: Version | null;
   isVSCode: boolean;
+  isArcticDB: number;
+  arcticConn: string;
+  columnCount: number;
   maxColumnWidth: number | null;
   maxRowHeight: number | null;
   mainTitle: string | null;
@@ -409,6 +435,11 @@ export interface AppSettings {
   queryEngine: QueryEngine;
   showAllHeatmapColumns: boolean;
   hideHeaderEditor: boolean;
+  lockHeaderMenu: boolean;
+  hideHeaderMenu: boolean;
+  hideMainMenu: boolean;
+  hideColumnMenus: boolean;
+  enableCustomFilters: boolean;
 }
 
 /** Properties for specifying filtered ranges */

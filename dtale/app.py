@@ -5,7 +5,6 @@ import jinja2
 import logging
 import os
 import pandas as pd
-import platform
 import random
 import socket
 import sys
@@ -36,6 +35,7 @@ import dtale.global_state as global_state
 import dtale.config as dtale_config
 from dtale import dtale
 from dtale.cli.clickutils import retrieve_meta_info_and_version, setup_logging
+from dtale.dash_application import views as dash_views
 from dtale.utils import (
     DuplicateDataError,
     build_shutdown_url,
@@ -43,6 +43,7 @@ from dtale.utils import (
     dict_merge,
     fix_url_path,
     get_host,
+    get_url_unquote,
     is_app_root_defined,
     make_list,
     running_with_flask_debug,
@@ -61,6 +62,7 @@ USE_COLAB = False
 JUPYTER_SERVER_PROXY = False
 ACTIVE_HOST = None
 ACTIVE_PORT = None
+SSL_CONTEXT = None
 
 _basepath = os.path.dirname(__file__)
 _filepath = os.path.abspath(os.path.join(_basepath, "static"))
@@ -160,10 +162,9 @@ class DtaleFlask(Flask):
                     )
                 )
             return fix_url_path("{}/{}".format(self.app_root, args[0]))
-        major, minor, revision = [int(i) for i in platform.python_version_tuple()]
-        if major == 2 or (major == 3 and minor < 7):
-            return flask_url_for(endpoint, *args, **kwargs)
-        return Flask.url_for(self, endpoint, *args, **kwargs)
+        if hasattr(Flask, "url_for"):
+            return Flask.url_for(self, endpoint, *args, **kwargs)
+        return flask_url_for(endpoint, *args, **kwargs)
 
     def _override_routes(self, rule):
         try:
@@ -174,19 +175,24 @@ class DtaleFlask(Flask):
                     for r in self.url_map._rules
                     if not contains_route(routes_to_remove, r)
                 ]
-                self.url_map = Map(
-                    rules=updated_rules,
-                    default_subdomain=self.url_map.default_subdomain,
-                    charset=self.url_map.charset,
-                    strict_slashes=self.url_map.strict_slashes,
-                    merge_slashes=self.url_map.merge_slashes,
-                    redirect_defaults=self.url_map.redirect_defaults,
-                    converters=self.url_map.converters,
-                    sort_parameters=self.url_map.sort_parameters,
-                    sort_key=self.url_map.sort_key,
-                    encoding_errors=self.url_map.encoding_errors,
-                    host_matching=self.url_map.host_matching,
-                )
+                url_map_keys = [
+                    "default_subdomains",
+                    "charset",
+                    "strict_slashes",
+                    "merge_slashes",
+                    "redirect_defaults",
+                    "converters",
+                    "sort_parameters",
+                    "sort_key",
+                    "encoding_errors",
+                    "host_matching",
+                ]
+                url_map_data = {
+                    k: getattr(self.url_map, k)
+                    for k in url_map_keys
+                    if hasattr(self.url_map, k)
+                }
+                self.url_map = Map(rules=updated_rules, **url_map_data)
 
             self.url_map._remap = True
             self.url_map.update()
@@ -418,8 +424,21 @@ def build_app(
         logger.info("Executing shutdown...")
         func = request.environ.get("werkzeug.server.shutdown")
         if func is None:
-            raise RuntimeError("Not running with the Werkzeug Server")
-        func()
+            logger.info(
+                "Not running with the Werkzeug Server, exiting by searching gc for BaseWSGIServer"
+            )
+            import gc
+            from werkzeug.serving import BaseWSGIServer
+
+            for obj in gc.get_objects():
+                try:
+                    if isinstance(obj, BaseWSGIServer):
+                        obj.shutdown()
+                        break
+                except Exception as e:
+                    logger.error(e)
+        else:
+            func()
         global_state.cleanup()
         ACTIVE_PORT = None
         ACTIVE_HOST = None
@@ -494,14 +513,15 @@ def build_app(
     def handle_data_id(_endpoint, values):
         if values and "data_id" in values:
             # https://github.com/man-group/dtale/commit/536691d365b69a580df836e617978eb563402ac5
+            values["data_id"] = get_url_unquote()(
+                values["data_id"]
+            )  # for handling back-slashes in arcticDB symbols
             data_id_from_name = global_state.get_data_id_by_name(values["data_id"])
             values["data_id"] = data_id_from_name or values["data_id"]
 
     auth.setup_auth(app)
 
     with app.app_context():
-        from .dash_application import views as dash_views
-
         app = dash_views.add_dash(app)
         return app
 
@@ -589,13 +609,13 @@ def find_free_port():
 
 
 def build_startup_url_and_app_root(app_root=None):
-    global ACTIVE_HOST, ACTIVE_PORT, JUPYTER_SERVER_PROXY, USE_COLAB
+    global ACTIVE_HOST, ACTIVE_PORT, SSL_CONTEXT, JUPYTER_SERVER_PROXY, USE_COLAB
 
     if USE_COLAB:
         colab_host = use_colab(ACTIVE_PORT)
         if colab_host:
             return colab_host, None
-    url = build_url(ACTIVE_PORT, ACTIVE_HOST)
+    url = build_url(ACTIVE_PORT, ACTIVE_HOST, SSL_CONTEXT is not None)
     final_app_root = app_root
     if final_app_root is None and JUPYTER_SERVER_PROXY:
         final_app_root = os.environ.get("JUPYTERHUB_SERVICE_PREFIX")
@@ -682,6 +702,15 @@ def show(data=None, data_loader=None, name=None, context_vars=None, **options):
     :type hide_drop_rows: bool, optional
     :param hide_header_editor: If true, this will hide the header editor when editing cells
     :type hide_header_editor: bool, optional
+    :param lock_header_menu: if true, this will always the display the header menu which usually only displays when you
+                             hover over the top
+    :type lock_header_menu: bool, optional
+    :param hide_header_menu: If true, this will hide the header menu from the screen
+    :type hide_header_menu: bool, optional
+    :param hide_main_menu: If true, this will hide the main menu from the screen
+    :type hide_main_menu: bool, optional
+    :param hide_column_menus: If true, this will hide the column menus from the screen
+    :type hide_column_menus: bool, optional
     :param column_edit_options: The options to allow on the front-end when editing a cell for the columns specified
     :type column_edit_options: dict, optional
     :param auto_hide_empty_columns: if True, then auto-hide any columns on the front-end that are comprised entirely of
@@ -690,6 +719,8 @@ def show(data=None, data_loader=None, name=None, context_vars=None, **options):
     :param highlight_filter: if True, then highlight rows on the frontend which will be filtered when applying a filter
                              rather than hiding them from the dataframe
     :type highlight_filter: boolean, optional
+    :param enable_custom_filters: If true, this will enable users to make custom filters from the UI
+    :type enable_custom_filters: bool, optional
 
     :Example:
 
@@ -701,7 +732,7 @@ def show(data=None, data_loader=None, name=None, context_vars=None, **options):
 
         ..link displayed in logging can be copied and pasted into any browser
     """
-    global ACTIVE_HOST, ACTIVE_PORT, USE_NGROK
+    global ACTIVE_HOST, ACTIVE_PORT, SSL_CONTEXT, USE_NGROK
 
     if name:
         if global_state.get_data_id_by_name(name):
@@ -739,6 +770,7 @@ def show(data=None, data_loader=None, name=None, context_vars=None, **options):
                 final_options["host"], final_options["port"], final_options["force"]
             )
 
+        SSL_CONTEXT = options.get("ssl_context")
         app_url = build_url(ACTIVE_PORT, ACTIVE_HOST)
         startup_url, final_app_root = build_startup_url_and_app_root(
             final_options["app_root"]
@@ -770,6 +802,11 @@ def show(data=None, data_loader=None, name=None, context_vars=None, **options):
             auto_hide_empty_columns=final_options.get("auto_hide_empty_columns"),
             highlight_filter=final_options.get("highlight_filter"),
             hide_header_editor=final_options.get("hide_header_editor"),
+            lock_header_menu=final_options.get("lock_header_menu"),
+            hide_header_menu=final_options.get("hide_header_menu"),
+            hide_main_menu=final_options.get("hide_main_menu"),
+            hide_column_menus=final_options.get("hide_column_menus"),
+            enable_custom_filters=final_options.get("enable_custom_filters"),
         )
         instance.started_with_open_browser = final_options["open_browser"]
         is_active = not running_with_flask_debug() and is_up(app_url)
@@ -786,35 +823,43 @@ def show(data=None, data_loader=None, name=None, context_vars=None, **options):
                 thread.start()
 
             def _start():
-                app = build_app(
-                    app_url,
-                    reaper_on=final_options["reaper_on"],
-                    host=ACTIVE_HOST,
-                    app_root=final_app_root,
-                )
-                if final_options["debug"] and not USE_NGROK:
-                    app.jinja_env.auto_reload = True
-                    app.config["TEMPLATES_AUTO_RELOAD"] = True
-                else:
-                    logging.getLogger("werkzeug").setLevel(LOG_ERROR)
-
-                if final_options["open_browser"]:
-                    instance.open_browser()
-
-                # hide banner message in production environments
-                cli = sys.modules.get("flask.cli")
-                if cli is not None:
-                    cli.show_server_banner = lambda *x: None
-
-                if USE_NGROK:
-                    app.run(threaded=True)
-                else:
-                    app.run(
-                        host="0.0.0.0",
-                        port=ACTIVE_PORT,
-                        debug=final_options["debug"],
-                        threaded=True,
+                try:
+                    app = build_app(
+                        app_url,
+                        reaper_on=final_options["reaper_on"],
+                        host=ACTIVE_HOST,
+                        app_root=final_app_root,
                     )
+                    if final_options["debug"] and not USE_NGROK:
+                        app.jinja_env.auto_reload = True
+                        app.config["TEMPLATES_AUTO_RELOAD"] = True
+                    else:
+                        logging.getLogger("werkzeug").setLevel(LOG_ERROR)
+
+                    if final_options["open_browser"]:
+                        instance.open_browser()
+
+                    # hide banner message in production environments
+                    cli = sys.modules.get("flask.cli")
+                    if cli is not None:
+                        cli.show_server_banner = lambda *x: None
+
+                    run_kwargs = {}
+                    if options.get("ssl_context"):
+                        run_kwargs["ssl_context"] = options.get("ssl_context")
+
+                    if USE_NGROK:
+                        app.run(threaded=True, **run_kwargs)
+                    else:
+                        app.run(
+                            host="0.0.0.0",
+                            port=ACTIVE_PORT,
+                            debug=final_options["debug"],
+                            threaded=True,
+                            **run_kwargs
+                        )
+                except BaseException as ex:
+                    logger.exception(ex)
 
         if final_options["subprocess"]:
             if is_active:

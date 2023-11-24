@@ -99,16 +99,35 @@ class PivotBuilder(object):
         return "\n".join(code)
 
 
-def gmean_handler(agg):
-    return stats.gmean if agg == "gmean" else agg
+def str_joiner(vals, join_char="|"):
+    return join_char.join(vals)
 
 
-def gmean_aggregate_handler(cols):
-    return {col: [gmean_handler(agg) for agg in aggs] for col, aggs in cols.items()}
+def custom_agg_handler(agg):
+    if agg == "gmean":
+        return stats.gmean
+    if agg == "str_joiner":
+        return str_joiner
+    return agg
 
 
-def gmean_str_handler(aggs):
-    return [agg if agg == "gmean" else "'{}'".format(agg) for agg in aggs]
+def custom_aggregate_handler(cols):
+    return {
+        col: [custom_agg_handler(agg) for agg in aggs] for col, aggs in cols.items()
+    }
+
+
+def custom_str_handler(aggs):
+    def _handler():
+        for agg in aggs:
+            if agg == "gmean":
+                yield agg
+            elif agg == "str_joiner":
+                yield "'|'.join"
+            else:
+                yield "'{}'".format(agg)
+
+    return list(_handler())
 
 
 class AggregateBuilder(object):
@@ -124,14 +143,27 @@ class AggregateBuilder(object):
                 data, index, dropna=dropna if dropna is not None else True
             )
             if agg_type == "func":
+                if "count_pct" == func:
+                    counts = agg_data.size()
+                    return pd.DataFrame(
+                        {"Count": counts, "Percentage": (counts / len(data)) * 100}
+                    )
                 if cols:
                     agg_data = agg_data[cols]
+                elif pandas_util.is_pandas2():
+                    non_str_cols = [
+                        c
+                        for c in data.select_dtypes(exclude="object").columns
+                        if hasattr(agg_data, c) and c != index
+                    ]
+                    agg_data = agg_data[non_str_cols]
+
                 return (
                     agg_data.agg(stats.gmean)
                     if func == "gmean"
                     else getattr(agg_data, func)()
                 )
-            agg_data = agg_data.aggregate(gmean_aggregate_handler(cols))
+            agg_data = agg_data.aggregate(custom_aggregate_handler(cols))
             agg_data.columns = flatten_columns(agg_data)
             return agg_data
 
@@ -144,7 +176,7 @@ class AggregateBuilder(object):
             )
             return agg_data.to_frame().T
 
-        agg_data = agg_data.aggregate(gmean_aggregate_handler(cols))
+        agg_data = agg_data.aggregate(custom_aggregate_handler(cols))
         agg_data = agg_data.to_frame().T
         return agg_data
 
@@ -161,6 +193,16 @@ class AggregateBuilder(object):
         if index:
             index = "', '".join(index)
             if agg_type == "func":
+                if "count_pct" == agg:
+                    code.append(
+                        (
+                            "total_records = len(df)\n"
+                            "df = df{groupby}\n"
+                            "counts = df.size()\n"
+                            "df = pd.DataFrame({'Count': counts, 'Percentage': (counts / total_records) * 100})"
+                        )
+                    )
+                    return code
                 agg_str = ".agg(gmean)" if agg == "gmean" else ".{}()".format(agg)
                 if cols is not None:
                     code.append(
@@ -185,7 +227,7 @@ class AggregateBuilder(object):
                 + "{",
                 ",\n".join(
                     "\t'{col}': ['{aggs}']".format(
-                        col=col, aggs=", ".join(gmean_str_handler(aggs))
+                        col=col, aggs=", ".join(custom_str_handler(aggs))
                     )
                     for col, aggs in cols.items()
                 ),
@@ -204,7 +246,7 @@ class AggregateBuilder(object):
             "df = df.aggregate({"
             + ",\n".join(
                 "\t'{col}': ['{aggs}']".format(
-                    col=col, aggs=", ".join(gmean_handler(aggs))
+                    col=col, aggs=", ".join(custom_agg_handler(aggs))
                 )
                 for col, aggs in cols.items()
             )

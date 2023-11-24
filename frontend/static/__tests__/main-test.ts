@@ -14,6 +14,13 @@ jest.mock('../popups/analysis/ColumnAnalysis', () => {
     default: createMockComponent('ColumnAnalysis'),
   };
 });
+jest.mock('../popups/arcticdb/LibrarySymbolSelector', () => {
+  const { createMockComponent } = require('./mocks/createMockComponent');
+  return {
+    __esModule: true,
+    default: createMockComponent('LibrarySymbolSelector'),
+  };
+});
 jest.mock('../popups/CodeExport', () => {
   const { createMockComponent } = require('./mocks/createMockComponent');
   return { CodeExport: createMockComponent('CodeExport') };
@@ -95,9 +102,9 @@ describe('main tests', () => {
     jest.resetModules();
     (axios.get as any).mockImplementation((url: string) => Promise.resolve({ data: reduxUtils.urlFetcher(url) }));
 
-    jest.mock('@blueprintjs/datetime2', () => {
+    jest.mock('@blueprintjs/datetime', () => {
       const { createMockComponent } = require('./mocks/createMockComponent');
-      return { DateInput2: createMockComponent('DateInput2') };
+      return { DateInput: createMockComponent('DateInput') };
     });
   });
 
@@ -157,17 +164,9 @@ describe('main tests', () => {
   });
 
   const popupCodes = [
-    ...[
-      'correlations',
-      'charts',
-      'describe',
-      'column-analysis',
-      'instances',
-      'code-export',
-      'filter',
-      'type-conversion',
-    ],
-    ...['cleaners', 'upload', 'merge', 'pps', 'variance', 'build', 'duplicates', 'replacement', 'reshape'],
+    ...['correlations', 'charts', 'describe', 'column-analysis', 'instances', 'code-export', 'filter'],
+    ...['type-conversion', 'cleaners', 'upload', 'merge', 'pps', 'variance', 'build', 'duplicates', 'replacement'],
+    ...['reshape', 'arcticdb'],
   ];
 
   popupCodes.forEach((popup) => {

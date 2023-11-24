@@ -74,8 +74,11 @@ export const buildInnerHTML = (props: Record<string, string | undefined> = {}, s
     buildHidden('data_id', props.dataId ?? DATA_ID),
     buildHidden('xarray', props.xarray ?? 'False'),
     buildHidden('xarray_dim', props.xarrayDim ?? '{}'),
-    buildHidden('allow_cell_edits', props.allowCellEdits ?? 'True'),
+    buildHidden('allow_cell_edits', props.allowCellEdits ?? 'true'),
     buildHidden('is_vscode', props.isVSCode ?? 'False'),
+    buildHidden('arctic_conn', props.arcticConn ?? ''),
+    buildHidden('is_arcticdb', props.isArcticDB ?? '0'),
+    buildHidden('column_count', props.columnCount ?? '0'),
     buildHidden('theme', props.theme ?? 'light'),
     buildHidden('language', props.language ?? 'en'),
     buildHidden('pin_menu', props.pinMenu ?? 'False'),
@@ -88,6 +91,11 @@ export const buildInnerHTML = (props: Record<string, string | undefined> = {}, s
     buildHidden('main_title_font', props.mainTitleFont ?? ''),
     buildHidden('query_engine', props.queryEngine ?? 'python'),
     buildHidden('hide_header_editor', props.hideHeaderEditor ?? HIDE_SHUTDOWN),
+    buildHidden('lock_header_menu', props.lockHeaderMenu ?? HIDE_SHUTDOWN),
+    buildHidden('hide_header_menu', props.hideHeaderMenu ?? HIDE_SHUTDOWN),
+    buildHidden('hide_main_menu', props.hideMainMenu ?? HIDE_SHUTDOWN),
+    buildHidden('hide_column_menus', props.hideColumnMenus ?? HIDE_SHUTDOWN),
+    buildHidden('enable_custom_filters', props.enableCustomFilters ?? HIDE_SHUTDOWN),
     BASE_HTML,
   ].join('');
   store?.dispatch(actions.init());
@@ -275,6 +283,6 @@ export const selectOption = async (selectElement: HTMLElement, option: Matcher |
     await selectEvent.openMenu(selectElement);
   });
   await act(async () => {
-    await selectEvent.select(selectElement, option);
+    await selectEvent.select(selectElement, option, { container: document.body });
   });
 };

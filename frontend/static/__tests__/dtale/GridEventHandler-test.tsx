@@ -82,7 +82,7 @@ describe('RibbonDropdown', () => {
 
   it('opens ribbon menu for first 5 pixels', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    setTimeoutSpy.mockImplementation((cb, ms) => ({} as NodeJS.Timeout));
+    setTimeoutSpy.mockImplementation((cb, ms) => ({}) as NodeJS.Timeout);
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
     const mainPanel = container.getElementsByClassName('main-panel-content')[0];
     const myEvent = createEvent.mouseMove(mainPanel, { clientY: 5 });
@@ -98,7 +98,7 @@ describe('RibbonDropdown', () => {
   it('hides ribbon menu outside of first 45 pixels', async () => {
     await buildMock(undefined, { ribbonMenuOpen: true });
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    setTimeoutSpy.mockImplementation((cb, ms) => ({} as NodeJS.Timeout));
+    setTimeoutSpy.mockImplementation((cb, ms) => ({}) as NodeJS.Timeout);
     const mainPanel = container.getElementsByClassName('main-panel-content')[0];
     const myEvent = createEvent.mouseMove(mainPanel, { clientY: 45 });
     fireEvent(mainPanel, myEvent);
@@ -111,7 +111,7 @@ describe('RibbonDropdown', () => {
   it('does not hide ribbon menu when dropdown is open', async () => {
     buildMock(undefined, { ribbonMenuOpen: true, ribbonDropdown: { visible: true } });
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    setTimeoutSpy.mockImplementation((cb, ms) => ({} as NodeJS.Timeout));
+    setTimeoutSpy.mockImplementation((cb, ms) => ({}) as NodeJS.Timeout);
     const mainPanel = container.getElementsByClassName('main-panel-content')[0];
     const myEvent = createEvent.mouseMove(mainPanel, { clientY: 45 });
     await fireEvent(mainPanel, myEvent);
@@ -167,5 +167,29 @@ describe('RibbonDropdown', () => {
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: ActionType.SET_RANGE_STATE, selectedRow: 1 }),
     );
+  });
+
+  it('does edit cell on double-click', async () => {
+    buildMock(undefined, { allowCellEdits: true }, <div className="cell" {...{ cell_idx: '1|2' }} />, true);
+    const cell = container.getElementsByClassName('cell')[0];
+    const myEvent = createEvent.click(cell);
+    fireEvent(cell, myEvent);
+    fireEvent(cell, myEvent);
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: ActionType.EDIT_CELL, editedCell: '1|2' }),
+    );
+  });
+
+  it('does not edit cell when ArcitcDB is active', async () => {
+    buildMock(
+      undefined,
+      { allowCellEdits: true, isArcticDB: 100 },
+      <div className="cell" {...{ cell_idx: '1|2' }} />,
+      true,
+    );
+    const cell = container.getElementsByClassName('cell')[0];
+    const myEvent = createEvent.dblClick(cell);
+    fireEvent(cell, myEvent);
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 });

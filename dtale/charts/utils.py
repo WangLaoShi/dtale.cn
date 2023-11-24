@@ -6,6 +6,7 @@ import pandas as pd
 import dtale.global_state as global_state
 import dtale.pandas_util as pandas_util
 from dtale.column_analysis import handle_cleaners
+from dtale.constants import CHART_JOINER_CHAR
 from dtale.query import build_col_key, run_query
 from dtale.utils import (
     ChartBuildingError,
@@ -24,7 +25,7 @@ YAXIS_CHARTS = ["line", "bar", "scatter"]
 ZAXIS_CHARTS = ["heatmap", "3d_scatter", "surface"]
 NON_EXT_AGGREGATION = ZAXIS_CHARTS + ["treemap", "maps"]
 ANIMATION_CHARTS = ["line"]
-ANIMATE_BY_CHARTS = ["bar", "3d_scatter", "heatmap", "maps"]
+ANIMATE_BY_CHARTS = ["bar", "3d_scatter", "heatmap", "maps", "histogram"]
 MAX_GROUPS = 30
 MAPBOX_TOKEN = None
 AGGS = dict(
@@ -130,6 +131,9 @@ def valid_chart(chart_type=None, x=None, y=None, z=None, **inputs):
         pareto_props = ["pareto_x", "pareto_bars", "pareto_line"]
         return all(inputs.get(p) is not None for p in pareto_props)
 
+    if chart_type == "histogram":
+        return inputs.get("histogram_col") is not None
+
     if not x:
         return False
 
@@ -167,7 +171,7 @@ def date_freq_handler(df):
     orig_idx = df.index
 
     def _handler(col_def):
-        col_def_segs = col_def.split("|")
+        col_def_segs = col_def.split(CHART_JOINER_CHAR)
         if len(col_def_segs) > 1 and classify_type(dtypes[col_def_segs[0]]) == "D":
             col, freq = col_def_segs
             if freq == "WD":
@@ -200,12 +204,13 @@ def convert_date_val_to_date(group_val):
 
 
 def group_filter_handler(col_def, group_val, group_classifier):
-    col_def_segs = col_def.split("|")
+    col_def_segs = col_def.split(CHART_JOINER_CHAR)
     if len(col_def_segs) > 1:
         col, freq = col_def_segs
         if group_val == "NaN":
-            return "{col} != {col}".format(col=build_col_key(col)), "{}: NaN".format(
-                col
+            return (
+                "{col} != {col}".format(col=build_col_key(col)),
+                "{}: NaN".format(col),
             )
         if freq == "WD":
             return (
@@ -275,12 +280,15 @@ def group_filter_handler(col_def, group_val, group_classifier):
                 "{}.dt.year: {}".format(col, ts_val.year),
             )
     if group_val == "NaN":
-        return "{col} != {col}".format(col=build_col_key(col_def)), "{}: NaN".format(
-            col_def
+        return (
+            "{col} != {col}".format(col=build_col_key(col_def)),
+            "{}: NaN".format(col_def),
         )
     if group_classifier in ["I", "F", "B"]:
         return (
-            "{col} == {val}".format(col=build_col_key(col_def), val=group_val),
+            "{col} == {val}".format(
+                col=build_col_key(col_def), val="{}".format(group_val).replace(",", "")
+            ),
             "{}: {}".format(col_def, group_val),
         )
     if group_classifier == "D":
@@ -523,7 +531,8 @@ def build_agg_data(
                 ")"
             ).format("','".join(idx_cols), "','".join(aggs["drop_duplicates"]))
         group_cols = [
-            "{}|drop_duplicates".format(col) for col in aggs["drop_duplicates"]
+            "{}{}drop_duplicates".format(col, CHART_JOINER_CHAR)
+            for col in aggs["drop_duplicates"]
         ]
         groups.columns = idx_cols + group_cols
     else:
@@ -552,18 +561,18 @@ def build_final_cols(y, z, agg, extended_aggregation):
         z = make_list(z)
         cols = y if not len(z) else z
         if agg is not None and agg != "raw":
-            return ["{}|{}".format(col, agg) for col in cols]
+            return ["{}{}{}".format(col, CHART_JOINER_CHAR, agg) for col in cols]
         return cols
     return [
-        "{}|{}".format(ext_agg["col"], ext_agg["agg"])
+        "{}{}{}".format(ext_agg["col"], CHART_JOINER_CHAR, ext_agg["agg"])
         for ext_agg in extended_aggregation
     ]
 
 
 def parse_final_col(final_col):
-    y_segs = final_col.split("|")
+    y_segs = final_col.split(CHART_JOINER_CHAR)
     if y_segs[-1] in AGGS:
-        return "|".join(y_segs[:-1]), y_segs[-1]
+        return CHART_JOINER_CHAR.join(y_segs[:-1]), y_segs[-1]
     return final_col, None
 
 
@@ -643,7 +652,10 @@ def compute_aggs(df, groups, aggs, idx_cols, group_col, dropna=True):
                     chart_data=chart_data_key,
                 )
             ]
-        final_cols = ["{}|{}".format(col, curr_agg) for col in calc_group.columns]
+        final_cols = [
+            "{}{}{}".format(col, CHART_JOINER_CHAR, curr_agg)
+            for col in calc_group.columns
+        ]
         all_code.append(
             "{chart_data}.columns = ['{cols}']".format(
                 chart_data=chart_data_key, cols="','".join(final_cols)
@@ -753,13 +765,23 @@ def build_base_chart(
             classifier = classify_type(find_dtype(data[col]))
             if classifier == "F" or (classifier == "I" and group_type == "bins"):
                 if bin_type == "width":
-                    data.loc[:, col] = pd.qcut(
-                        data[col], q=bins_val, duplicates="drop"
-                    ).astype("str")
+                    kwargs = (
+                        {"duplicates": "drop"}
+                        if pandas_util.check_pandas_version("0.23.0")
+                        else {}
+                    )
+                    data.loc[:, col] = pd.qcut(data[col], q=bins_val, **kwargs).astype(
+                        "str"
+                    )
+                    kwargs_str = (
+                        ', duplicates="drop"'
+                        if pandas_util.check_pandas_version("0.23.0")
+                        else ""
+                    )
                     code.append(
                         (
-                            "chart_data.loc[:, '{col}'] = pd.qcut(chart_data['{col}'], q={bins}, duplicates=\"drop\")"
-                        ).format(col=col, bins=bins_val)
+                            "chart_data.loc[:, '{col}'] = pd.qcut(chart_data['{col}'], q={bins}{kwargs})"
+                        ).format(col=col, bins=bins_val, kwargs=kwargs_str)
                     )
                 else:
                     bins_data = data[col].dropna()
@@ -769,18 +791,28 @@ def build_base_chart(
                         np.arange(npt),
                         np.sort(bins_data),
                     )
+                    kwargs = (
+                        {"duplicates": "drop"}
+                        if pandas_util.check_pandas_version("0.23.0")
+                        else {}
+                    )
                     data.loc[:, col] = pd.cut(
-                        data[col], bins=equal_freq_bins, duplicates="drop"
+                        data[col], bins=equal_freq_bins, **kwargs
                     ).astype("str")
+                    cut_kwargs_str = (
+                        ', duplicates="drop"'
+                        if pandas_util.check_pandas_version("0.23.0")
+                        else ""
+                    )
                     code.append(
                         (
                             "bins_data = data['{col}'].dropna()\n"
                             "npt = len(bins_data)\n"
                             "equal_freq_bins = np.interp(np.linspace(0, npt, {bins}), np.arange(npt), "
                             "np.sort(bins_data))\n"
-                            "chart_data.loc[:, '{col}'] = pd.cut(chart_data['{col}'], bins=equal_freq_bins, "
-                            'duplicates="drop")'
-                        ).format(col=col, bins=bins_val + 1)
+                            "chart_data.loc[:, '{col}'] = pd.cut(chart_data['{col}'], bins=equal_freq_bins"
+                            "{cut_kwargs})"
+                        ).format(col=col, bins=bins_val + 1, cut_kwargs=cut_kwargs_str)
                     )
 
         main_group = group_col

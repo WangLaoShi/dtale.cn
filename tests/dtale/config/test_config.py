@@ -23,6 +23,11 @@ def test_load_app_settings():
         "max_column_width": 50,
         "query_engine": "numexpr",
         "hide_header_editor": True,
+        "lock_header_menu": True,
+        "hide_header_menu": True,
+        "hide_main_menu": True,
+        "hide_column_menus": True,
+        "enable_custom_filters": True,
     }
     with ExitStack() as stack:
         stack.enter_context(mock.patch("dtale.global_state.APP_SETTINGS", settings))
@@ -35,6 +40,11 @@ def test_load_app_settings():
         assert settings["max_column_width"] == 50
         assert settings["query_engine"] == "numexpr"
         assert settings["hide_header_editor"]
+        assert settings["lock_header_menu"]
+        assert settings["hide_header_menu"]
+        assert settings["hide_main_menu"]
+        assert settings["hide_column_menus"]
+        assert settings["enable_custom_filters"]
 
         load_app_settings(
             load_config_state(os.path.join(os.path.dirname(__file__), "dtale.ini"))
@@ -48,6 +58,11 @@ def test_load_app_settings():
         assert settings["main_title_font"] == "Arial"
         assert settings["query_engine"] == "python"
         assert not settings["hide_header_editor"]
+        assert not settings["lock_header_menu"]
+        assert not settings["hide_header_menu"]
+        assert not settings["hide_main_menu"]
+        assert not settings["hide_column_menus"]
+        assert not settings["enable_custom_filters"]
 
 
 @pytest.mark.unit
@@ -61,6 +76,11 @@ def test_load_app_settings_w_missing_props():
         "max_column_width": None,
         "query_engine": "python",
         "hide_header_editor": True,
+        "lock_header_menu": True,
+        "hide_header_menu": True,
+        "hide_main_menu": True,
+        "hide_column_menus": True,
+        "enable_custom_filters": True,
     }
     with ExitStack() as stack:
         stack.enter_context(mock.patch("dtale.global_state.APP_SETTINGS", settings))
@@ -71,6 +91,11 @@ def test_load_app_settings_w_missing_props():
         assert settings["language"] == "cn"
         assert settings["max_column_width"] is None
         assert settings["hide_header_editor"]
+        assert settings["lock_header_menu"]
+        assert settings["hide_header_menu"]
+        assert settings["hide_main_menu"]
+        assert settings["hide_column_menus"]
+        assert settings["enable_custom_filters"]
 
         load_app_settings(
             load_config_state(
@@ -82,15 +107,16 @@ def test_load_app_settings_w_missing_props():
         assert settings["language"] == "cn"
         assert settings["max_column_width"] is None
         assert not settings["hide_header_editor"]
+        assert not settings["lock_header_menu"]
+        assert not settings["hide_header_menu"]
+        assert not settings["hide_main_menu"]
+        assert not settings["hide_column_menus"]
+        assert not settings["enable_custom_filters"]
 
 
 @pytest.mark.unit
 def test_load_auth_settings():
-    settings = {
-        "active": True,
-        "username": "foo",
-        "password": "foo",
-    }
+    settings = {"active": True, "username": "foo", "password": "foo"}
     with ExitStack() as stack:
         stack.enter_context(mock.patch("dtale.global_state.AUTH_SETTINGS", settings))
 
@@ -149,7 +175,7 @@ def test_build_show_options(unittest):
 
 
 @pytest.mark.unit
-def test_build_show_options_w_missing_ini_props():
+def test_build_show_options_w_missing_ini_props(unittest):
     final_options = build_show_options()
     assert final_options["allow_cell_edits"]
 
@@ -174,3 +200,10 @@ def test_build_show_options_w_missing_ini_props():
     set_config(None)
     final_options = build_show_options(options)
     assert not final_options["allow_cell_edits"]
+
+    ini_path = os.path.join(
+        os.path.dirname(__file__), "dtale_allow_cell_edits_list.ini"
+    )
+    os.environ["DTALE_CONFIG"] = ini_path
+    final_options = build_show_options()
+    unittest.assertEqual(final_options["allow_cell_edits"], ["a", "b"])

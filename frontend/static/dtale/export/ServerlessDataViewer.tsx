@@ -1,3 +1,4 @@
+import { createSelector } from '@reduxjs/toolkit';
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -11,7 +12,7 @@ import { AnyAction } from 'redux';
 
 import { usePrevious } from '../../customHooks';
 import * as actions from '../../redux/actions/dtale';
-import { AppState } from '../../redux/state/AppState';
+import * as selectors from '../../redux/selectors';
 import { DataResponseContent } from '../../repository/DataRepository';
 import * as bu from '../backgroundUtils';
 import { ColumnDef, DataViewerData, PropagatedState } from '../DataViewerState';
@@ -31,6 +32,38 @@ interface ServerlessDataViewerProps {
   response: DataResponseContent;
 }
 
+const selectResult = createSelector(
+  [
+    selectors.selectTheme,
+    selectors.selectSettings,
+    selectors.selectMenuPinned,
+    selectors.selectRibbonMenuOpen,
+    selectors.selectMaxColumnWidth,
+    selectors.selectMaxRowHeight,
+    selectors.selectEditedTextAreaHeight,
+    selectors.selectVerticalHeaders,
+  ],
+  (
+    theme,
+    settings,
+    menuPinned,
+    ribbonMenuOpen,
+    maxColumnWidth,
+    maxRowHeight,
+    editedTextAreaHeight,
+    verticalHeaders,
+  ) => ({
+    theme,
+    settings,
+    menuPinned,
+    ribbonMenuOpen,
+    maxColumnWidth: maxColumnWidth || undefined,
+    maxRowHeight: maxRowHeight || undefined,
+    editedTextAreaHeight,
+    verticalHeaders: verticalHeaders ?? false,
+  }),
+);
+
 export const ServerlessDataViewer: React.FC<ServerlessDataViewerProps> = ({ response }) => {
   const {
     theme,
@@ -41,22 +74,12 @@ export const ServerlessDataViewer: React.FC<ServerlessDataViewerProps> = ({ resp
     maxRowHeight,
     editedTextAreaHeight,
     verticalHeaders,
-  } = useSelector((state: AppState) => ({
-    theme: state.theme,
-    settings: state.settings,
-    menuPinned: state.menuPinned,
-    ribbonMenuOpen: state.ribbonMenuOpen,
-    maxColumnWidth: state.maxColumnWidth || undefined,
-    maxRowHeight: state.maxRowHeight || undefined,
-    editedTextAreaHeight: state.editedTextAreaHeight,
-    verticalHeaders: state.settings.verticalHeaders ?? false,
-  }));
+  } = useSelector(selectResult);
   const dispatch = useDispatch();
   const updateFilteredRanges = (query: string): AnyAction =>
     dispatch(actions.updateFilteredRanges(query) as any as AnyAction);
 
   const [rowCount, setRowCount] = React.useState(0);
-  const [fixedColumnCount, setFixedColumnCount] = React.useState((settings.locked ?? []).length + 1); // add 1 for IDX column
   const [data, setData] = React.useState<DataViewerData>({});
   const [columns, setColumns] = React.useState<ColumnDef[]>([]);
   const [triggerResize, setTriggerResize] = React.useState(false);
@@ -170,7 +193,6 @@ export const ServerlessDataViewer: React.FC<ServerlessDataViewerProps> = ({ resp
     setData(finalState.data ?? data);
     setColumns(finalState.columns ?? columns);
     setRowCount(finalState.rowCount ?? rowCount);
-    setFixedColumnCount(finalState.fixedColumnCount ?? fixedColumnCount);
     setTriggerResize(finalState.triggerResize ?? triggerResize);
     callback?.();
   };
@@ -194,7 +216,7 @@ export const ServerlessDataViewer: React.FC<ServerlessDataViewerProps> = ({ resp
               overscanColumnCount={0}
               overscanRowCount={5}
               fixedRowCount={1}
-              fixedColumnCount={fixedColumnCount}
+              fixedColumnCount={gu.getActiveLockedCols(columns, settings.backgroundMode).length}
               rowCount={rowCount}
               columnCount={gu.getActiveCols(columns, settings.backgroundMode).length}
               cellRenderer={cellRenderer}

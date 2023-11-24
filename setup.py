@@ -72,7 +72,7 @@ class PyTest(TestCommand):
 
 setup(
     name="dtale",
-    version="2.12.2",
+    version="3.7.0",
     author="MAN Alpha Technology",
     author_email="ManAlphaTech@man.com",
     description="Web Client for Visualizing Pandas Objects",
@@ -83,7 +83,9 @@ setup(
     install_requires=read_file("requirements.txt"),
     extras_require={
         "arctic": ["arctic <= 1.79.4"],
+        "arcticdb": ["arcticdb"],
         "dash-bio": [
+            "ParmEd==3.4.3; python_version == '3.6'",
             "dash-bio; python_version > '3.0'",
             "dash-bio==0.7.1; python_version == '2.7'",
         ],
@@ -106,6 +108,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     cmdclass={"test": PyTest},
     packages=find_packages(exclude=["tests*", "script*"]),

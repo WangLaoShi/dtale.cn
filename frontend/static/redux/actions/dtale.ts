@@ -20,7 +20,7 @@ export const loadBackgroundMode = (store: Store<AppState, AnyAction>): void => {
   const { settings } = store.getState();
   store.dispatch({
     type: ActionType.UPDATE_SETTINGS,
-    settings: { backgroundMode: settings.backgroundMode ?? !!settings.rangeHighlight?.length ? 'range' : undefined },
+    settings: { backgroundMode: settings.backgroundMode ?? (!!settings.rangeHighlight?.length ? 'range' : undefined) },
   });
 };
 
@@ -42,6 +42,46 @@ export const loadHideHeaderEditor = (store: Store<AppState, AnyAction>): void =>
   store.dispatch({
     type: ActionType.UPDATE_HIDE_HEADER_EDITOR,
     value: hideHeaderEditor ?? settings.hide_header_editor ?? hideHeaderEditor,
+  });
+};
+
+export const loadLockHeaderMenu = (store: Store<AppState, AnyAction>): void => {
+  const { settings, lockHeaderMenu } = store.getState();
+  store.dispatch({
+    type: ActionType.UPDATE_LOCK_HEADER_MENU,
+    value: lockHeaderMenu ?? settings.lock_header_menu ?? lockHeaderMenu,
+  });
+};
+
+export const loadHideHeaderMenu = (store: Store<AppState, AnyAction>): void => {
+  const { settings, hideHeaderMenu } = store.getState();
+  store.dispatch({
+    type: ActionType.UPDATE_HIDE_HEADER_MENU,
+    value: hideHeaderMenu ?? settings.hide_header_menu ?? hideHeaderMenu,
+  });
+};
+
+export const loadHideMainMenu = (store: Store<AppState, AnyAction>): void => {
+  const { settings, hideMainMenu } = store.getState();
+  store.dispatch({
+    type: ActionType.UPDATE_HIDE_MAIN_MENU,
+    value: hideMainMenu ?? settings.hide_main_menu ?? hideMainMenu,
+  });
+};
+
+export const loadHideColumnMenus = (store: Store<AppState, AnyAction>): void => {
+  const { settings, hideColumnMenus } = store.getState();
+  store.dispatch({
+    type: ActionType.UPDATE_HIDE_COLUMN_MENUS,
+    value: hideColumnMenus ?? settings.hide_column_menus ?? hideColumnMenus,
+  });
+};
+
+export const loadEnableCustomFilters = (store: Store<AppState, AnyAction>): void => {
+  const { settings, enableCustomFilters } = store.getState();
+  store.dispatch({
+    type: ActionType.UPDATE_ENABLE_CUSTOM_FILTERS,
+    value: enableCustomFilters ?? settings.enable_custom_filters ?? enableCustomFilters,
   });
 };
 
@@ -132,7 +172,10 @@ export const getParams = (): Record<string, string | string[]> => {
 export const updateFilteredRanges =
   (query: string): AppActions<Promise<void>> =>
   async (dispatch, getState) => {
-    const { dataId, filteredRanges } = getState();
+    const { dataId, filteredRanges, isArcticDB, columnCount } = getState();
+    if (!!isArcticDB && (isArcticDB >= 1_000_000 || columnCount > 100)) {
+      return;
+    }
     const currQuery = filteredRanges?.query ?? '';
     if (currQuery !== query) {
       const ranges = await serverState.loadFilteredRanges(dataId!);

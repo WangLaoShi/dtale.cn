@@ -1,3 +1,4 @@
+import { createSelector } from '@reduxjs/toolkit';
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -5,7 +6,8 @@ import { Checkbox } from '../popups/create/LabeledCheckbox';
 import { DtaleSelect } from '../popups/create/LabeledSelect';
 import { ActionType, ClearEditAction, OpenChartAction } from '../redux/actions/AppActions';
 import * as chartActions from '../redux/actions/charts';
-import { AppState, BaseOption, Popups } from '../redux/state/AppState';
+import { selectDataId, selectMaxColumnWidth, selectSettings } from '../redux/selectors';
+import { BaseOption, Popups } from '../redux/state/AppState';
 import * as ColumnFilterRepository from '../repository/ColumnFilterRepository';
 
 import { ColumnDef, DataViewerData, DataViewerPropagateState } from './DataViewerState';
@@ -23,6 +25,11 @@ export interface GridCellEditorProps {
   rowCount: number;
 }
 
+const selectResult = createSelector(
+  [selectDataId, selectSettings, selectMaxColumnWidth],
+  (dataId, settings, maxColumnWidth) => ({ dataId, settings, maxColumnWidth }),
+);
+
 export const GridCellEditor: React.FC<GridCellEditorProps> = ({
   colCfg,
   rowIndex,
@@ -32,11 +39,7 @@ export const GridCellEditor: React.FC<GridCellEditorProps> = ({
   rowCount,
   ...props
 }) => {
-  const { dataId, settings, maxColumnWidth } = useSelector((state: AppState) => ({
-    dataId: state.dataId,
-    settings: state.settings,
-    maxColumnWidth: state.maxColumnWidth,
-  }));
+  const { dataId, settings, maxColumnWidth } = useSelector(selectResult);
   const dispatch = useDispatch();
   const openChart = (chartData: Popups): OpenChartAction => dispatch(chartActions.openChart(chartData));
   const clearEdit = (): ClearEditAction => dispatch({ type: ActionType.CLEAR_EDIT });
@@ -62,11 +65,14 @@ export const GridCellEditor: React.FC<GridCellEditorProps> = ({
     const settingsOptions = (settings.column_edit_options ?? {})[colCfg.name] ?? [];
     if (settingsOptions.length) {
       setCustomOptions(settingsOptions.map((so) => ({ value: so })));
-    } else if (gu.ColumnType.CATEGORY === gu.findColType(colCfg.dtype)) {
-      (async () => {
-        const filterData = await ColumnFilterRepository.loadFilterData(dataId, colCfg.name);
-        setOptions(filterData?.uniques?.map((v) => ({ value: `${v}` })) ?? []);
-      })();
+    } else {
+      if (gu.ColumnType.CATEGORY === gu.findColType(colCfg.dtype)) {
+        (async () => {
+          const filterData = await ColumnFilterRepository.loadFilterData(dataId, colCfg.name);
+          setOptions(filterData?.uniques?.map((v) => ({ value: `${v}` })) ?? []);
+        })();
+      }
+      setCustomOptions([]);
     }
   }, [colCfg.name]);
 
@@ -98,6 +104,7 @@ export const GridCellEditor: React.FC<GridCellEditorProps> = ({
           onChange={(state: BaseOption<string> | Array<BaseOption<any>> | undefined) =>
             setValue((state as BaseOption<string>)?.value ?? '')
           }
+          menuPortalTarget={true}
         />
       </div>
     );
@@ -128,6 +135,7 @@ export const GridCellEditor: React.FC<GridCellEditorProps> = ({
           onChange={(state: BaseOption<string> | Array<BaseOption<any>> | undefined) =>
             setValue((state as BaseOption<string>)?.value ?? '')
           }
+          menuPortalTarget={true}
         />
       </div>
     );

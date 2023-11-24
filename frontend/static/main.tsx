@@ -6,6 +6,7 @@ import { Store } from 'redux';
 import { DataViewer } from './dtale/DataViewer';
 import './i18n';
 import ColumnAnalysis from './popups/analysis/ColumnAnalysis';
+import LibrarySymbolSelector from './popups/arcticdb/LibrarySymbolSelector';
 import { CodeExport } from './popups/CodeExport';
 import CodePopup from './popups/CodePopup';
 import { Correlations } from './popups/correlations/Correlations';
@@ -43,6 +44,11 @@ let storeBuilder: () => Store = () => {
   actions.loadHideShutdown(store);
   actions.loadAllowCellEdits(store);
   actions.loadHideHeaderEditor(store);
+  actions.loadLockHeaderMenu(store);
+  actions.loadHideHeaderMenu(store);
+  actions.loadHideMainMenu(store);
+  actions.loadHideColumnMenus(store);
+  actions.loadEnableCustomFilters(store);
   return store;
 };
 if (pathname.indexOf('/dtale/popup') === 0) {
@@ -118,6 +124,9 @@ if (pathname.indexOf('/dtale/popup') === 0) {
       break;
     case 'code-export':
       rootNode = <CodeExport />;
+      break;
+    case 'arcticdb':
+      rootNode = <LibrarySymbolSelector />;
       break;
     case 'upload':
     default:

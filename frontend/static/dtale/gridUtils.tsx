@@ -109,7 +109,10 @@ export const heatmapAllActive = (backgroundMode?: string): boolean =>
   ['heatmap-col-all', 'heatmap-all-all'].includes(backgroundMode ?? '');
 
 export const getActiveCols = (columns: ColumnDef[], backgroundMode?: string): ColumnDef[] =>
-  columns?.filter((c) => (heatmapActive(backgroundMode) ? getHeatActive(c) : c.visible ?? false)) ?? [];
+  columns.filter((c) => (heatmapActive(backgroundMode) ? getHeatActive(c) : c.visible ?? false)) ?? [];
+
+export const getActiveLockedCols = (columns: ColumnDef[], backgroundMode?: string): ColumnDef[] =>
+  getActiveCols(columns, backgroundMode).filter((c) => c.locked) ?? [];
 
 export const getCol = (index: number, columns: ColumnDef[], backgroundMode?: string): ColumnDef | undefined =>
   getActiveCols(columns, backgroundMode)[index];
@@ -283,7 +286,7 @@ export const noFilters = (state: Partial<InstanceSettings>): boolean =>
   !Object.keys(filterPredefined(state.predefinedFilters ?? {})).length;
 
 export const hasNoInfo = (settings: Partial<InstanceSettings>, columns: ColumnDef[]): boolean =>
-  !settings.sortInfo?.length && noFilters(settings) && noHidden(columns);
+  !settings.isArcticDB && !settings.sortInfo?.length && noFilters(settings) && noHidden(columns);
 
 export const convertCellIdxToCoords = (cellIdx: string): number[] =>
   (cellIdx ?? '').split('|').map((v) => parseInt(v, 10));
@@ -345,10 +348,25 @@ export const refreshColumns = (
     }));
   const updatedColumns = buildColMap(newColumns);
   const finalColumns = [
-    ...columns.map((c) => (c.dtype !== updatedColumns[c.name].dtype ? { ...c, ...updatedColumns[c.name] } : c)),
+    ...columns.map((c) => {
+      if (c.dtype !== updatedColumns[c.name].dtype) {
+        return { ...c, ...updatedColumns[c.name] };
+      }
+      return { ...c, visible: updatedColumns[c.name].visible };
+    }),
     ...newCols,
   ];
   return { columns: finalColumns, ...getTotalRange(finalColumns) };
 };
 
 export const range = (start: number, end: number): number[] => [...Array(end - start).keys()].map((i) => i + start);
+
+export const isCellEditable = (allowCellEdits: boolean | string[], column?: ColumnDef): boolean => {
+  if (allowCellEdits === true) {
+    return true;
+  }
+  if (allowCellEdits === false) {
+    return false;
+  }
+  return allowCellEdits.indexOf(column?.name ?? '') > -1;
+};

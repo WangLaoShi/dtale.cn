@@ -56,11 +56,12 @@ describe('DescribeFilters tests', () => {
     it('rendering boxplot', () => {
       expect(screen.queryAllByTestId('ordinal-col')).toHaveLength(0);
       expect(screen.queryAllByTestId('category-col')).toHaveLength(0);
-      expect(screen.queryAllByTestId('value-input')).toHaveLength(0);
+      expect(screen.queryAllByTestId('top-input')).toHaveLength(0);
       expect(Array.from(result.getElementsByTagName('button')).map((b) => b.textContent)).toEqual([
         'Describe',
         'Histogram',
         'Value Counts',
+        'Frequency Table',
         'Q-Q Plot',
       ]);
     });
@@ -71,7 +72,7 @@ describe('DescribeFilters tests', () => {
       });
       expect(screen.queryAllByTestId('ordinal-col')).toHaveLength(0);
       expect(screen.queryAllByTestId('category-col')).toHaveLength(0);
-      expect(screen.getByTestId('value-input')).toBeDefined();
+      expect(screen.getByTestId('bins-input')).toBeDefined();
       await act(async () => {
         await fireEvent.click(screen.getByText('Probability'));
       });
@@ -84,7 +85,7 @@ describe('DescribeFilters tests', () => {
       });
       expect(screen.getByTestId('ordinal-col')).toBeDefined();
       expect(screen.queryAllByTestId('category-col')).toHaveLength(0);
-      expect(screen.getByTestId('value-input')).toBeDefined();
+      expect(screen.getByTestId('top-input')).toBeDefined();
     });
   });
 
@@ -94,7 +95,7 @@ describe('DescribeFilters tests', () => {
     it('rendering boxplot', () => {
       expect(screen.queryAllByTestId('ordinal-col')).toHaveLength(0);
       expect(screen.queryAllByTestId('category-col')).toHaveLength(0);
-      expect(screen.queryAllByTestId('value-input')).toHaveLength(0);
+      expect(screen.queryAllByTestId('top-input')).toHaveLength(0);
       expect(Array.from(result.getElementsByTagName('button')).map((b) => b.textContent)).toEqual([
         'Describe',
         'Histogram',
@@ -109,7 +110,7 @@ describe('DescribeFilters tests', () => {
       });
       expect(screen.queryAllByTestId('ordinal-col')).toHaveLength(0);
       expect(screen.queryAllByTestId('category-col')).toHaveLength(0);
-      expect(screen.getByTestId('value-input')).toBeDefined();
+      expect(screen.getByTestId('bins-input')).toBeDefined();
     });
 
     it('rendering categories', async () => {
@@ -118,7 +119,7 @@ describe('DescribeFilters tests', () => {
       });
       expect(screen.queryAllByTestId('ordinal-col')).toHaveLength(0);
       expect(screen.getByTestId('category-col')).toBeDefined();
-      expect(screen.getByTestId('value-input')).toBeDefined();
+      expect(screen.getByTestId('top-input')).toBeDefined();
     });
   });
 
@@ -128,11 +129,12 @@ describe('DescribeFilters tests', () => {
     it('rendering boxplot', () => {
       expect(screen.queryAllByTestId('ordinal-col')).toHaveLength(0);
       expect(screen.queryAllByTestId('category-col')).toHaveLength(0);
-      expect(screen.queryAllByTestId('value-input')).toHaveLength(0);
+      expect(screen.queryAllByTestId('top-input')).toHaveLength(0);
       expect(Array.from(result.getElementsByTagName('button')).map((b) => b.textContent)).toEqual([
         'Describe',
         'Histogram',
         'Value Counts',
+        'Frequency Table',
         'Q-Q Plot',
       ]);
     });
@@ -143,7 +145,7 @@ describe('DescribeFilters tests', () => {
       });
       expect(screen.getByTestId('ordinal-col')).toBeDefined();
       expect(screen.queryAllByTestId('category-col')).toHaveLength(0);
-      expect(screen.getByTestId('value-input')).toBeDefined();
+      expect(screen.getByTestId('top-input')).toBeDefined();
     });
   });
 

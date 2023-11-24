@@ -19,6 +19,11 @@ describe('reduxGridUtils', () => {
       verticalHeaders: false,
       predefinedFilters: {},
       hide_header_editor: false,
+      lock_header_menu: false,
+      hide_header_menu: false,
+      hide_main_menu: false,
+      hide_column_menus: false,
+      enable_custom_filters: false,
     };
     reduxUtils.handleReduxState(
       columns,

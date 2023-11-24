@@ -1,3 +1,4 @@
+import { createSelector } from '@reduxjs/toolkit';
 import numeral from 'numeral';
 import * as React from 'react';
 import { withTranslation, WithTranslation } from 'react-i18next';
@@ -22,7 +23,8 @@ import {
   OpenChartAction,
 } from '../../redux/actions/AppActions';
 import * as chartActions from '../../redux/actions/charts';
-import { AppState, DataViewerUpdateType, Popups, PopupType, SortDef } from '../../redux/state/AppState';
+import { selectDataId, selectIsArcticDB } from '../../redux/selectors';
+import { DataViewerUpdateType, Popups, PopupType, SortDef } from '../../redux/state/AppState';
 import { RemovableError } from '../../RemovableError';
 import * as CorrelationsRepository from '../../repository/CorrelationsRepository';
 import { StyledSlider, Thumb, Track } from '../../sliderUtils';
@@ -52,8 +54,10 @@ const buildData = (
     corrs: Object.values(corrs[row.column] ?? {}).filter((corr) => corr !== null && corr > threshold).length,
   }));
 
+const selectResult = createSelector([selectDataId, selectIsArcticDB], (dataId, isArcticDB) => ({ dataId, isArcticDB }));
+
 const CorrelationAnalysis: React.FC<WithTranslation> = ({ t }) => {
-  const dataId = useSelector((state: AppState) => state.dataId);
+  const { dataId, isArcticDB } = useSelector(selectResult);
   const dispatch = useDispatch();
   const openChart = (chartData: Popups): OpenChartAction => dispatch(chartActions.openChart(chartData));
   const reduxDropColumns = (columns: string[]): DataViewerUpdateAction =>
@@ -160,15 +164,15 @@ const CorrelationAnalysis: React.FC<WithTranslation> = ({ t }) => {
         <div className="d-inline-block" style={{ width: 200 }} data-testid="corr-threshold">
           <StyledSlider
             renderTrack={Track as any}
-            renderThumb={Thumb}
+            renderThumb={(props: any, state: any) => Thumb(props, state)}
             value={threshold}
             min={0.0}
             max={1.0}
             step={0.01}
-            onAfterChange={(value) => updateThreshold(value as number)}
+            onAfterChange={(value: any) => updateThreshold(value as number)}
           />
         </div>
-        {hasUnselected && (
+        {!isArcticDB && hasUnselected && (
           <button className="btn btn-primary float-right pt-2 pb-2 d-inline-block" onClick={dropColumns}>
             <span>{t('Drop Unselected Columns', { ns: 'corr_analysis' })}?</span>
           </button>
@@ -190,19 +194,21 @@ const CorrelationAnalysis: React.FC<WithTranslation> = ({ t }) => {
                     rowCount={data.length}
                     width={width}
                   >
-                    <Column
-                      dataKey="selected"
-                      label={t('corr_analysis:Keep')}
-                      headerRenderer={headerRenderer}
-                      width={60}
-                      style={{ textAlign: 'left', paddingLeft: '.5em' }}
-                      className="cell"
-                      cellRenderer={(props: TableCellProps) => (
-                        <div onClick={toggleSelected(props.rowData)} className="text-center pointer">
-                          <i className={`ico-check-box${selections[props.rowData.column] ? '' : '-outline-blank'}`} />
-                        </div>
-                      )}
-                    />
+                    {!isArcticDB && (
+                      <Column
+                        dataKey="selected"
+                        label={t('corr_analysis:Keep')}
+                        headerRenderer={headerRenderer}
+                        width={60}
+                        style={{ textAlign: 'left', paddingLeft: '.5em' }}
+                        className="cell"
+                        cellRenderer={(props: TableCellProps) => (
+                          <div onClick={toggleSelected(props.rowData)} className="text-center pointer">
+                            <i className={`ico-check-box${selections[props.rowData.column] ? '' : '-outline-blank'}`} />
+                          </div>
+                        )}
+                      />
+                    )}
                     <Column
                       dataKey="column"
                       label={t('corr_analysis:Column')}
@@ -214,9 +220,9 @@ const CorrelationAnalysis: React.FC<WithTranslation> = ({ t }) => {
                     />
                     <Column
                       dataKey="score"
-                      label={t('Max Correlation w/ Other Columns', {
+                      label={`${t('Max Correlation', { ns: 'corr_analysis' })}\n${t('w/ Other Columns', {
                         ns: 'corr_analysis',
-                      })}
+                      })}`}
                       headerRenderer={headerRenderer}
                       width={100}
                       flexGrow={1}
@@ -228,7 +234,9 @@ const CorrelationAnalysis: React.FC<WithTranslation> = ({ t }) => {
                     />
                     <Column
                       dataKey="corrs"
-                      label={`${t('corr_analysis:Correlations')}\n${t('Above Threshold', { ns: 'corr_analysis' })}`}
+                      label={`${t('Correlations', { ns: 'corr_analysis' })}\n${t('Above Threshold', {
+                        ns: 'corr_analysis',
+                      })}`}
                       headerRenderer={headerRenderer}
                       width={100}
                       flexGrow={1}

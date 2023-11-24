@@ -57,7 +57,9 @@
     "Time Series Analysis": "Time Series Analysis",
     "gage_rnr": "Gage R & R",
     "Vertical Column Headers": "Vertical Column Headers",
-    "Hide Header Editor": "Hide Header Editor"
+    "Hide Header Editor": "Hide Header Editor",
+    "Load ArcticDB Data": "Load ArcticDB Data",
+    "Jump To Column": "Jump To Column"
   },
   "menu_description": {
     "describe": "Descreve valores das colunas (Valores únicos, Min, Max, Soma, STD, Var,...)",
@@ -106,7 +108,9 @@
     "gage_rnr": "A Gage R&R is a scientific study that falls under the larger topic of Measurement System Analysis (MSA). When you observe any measurement, it will typically vary from time to time. That variation in the observed measurement will be the result of the variation in the object that you are measuring plus the variation of the measuring device.",
     "vertical_headers": "Rotate column headers vertically",
     "timeseries_analysis": "Analyze time series data using different \"statsmodels.tsa\" functions",
-    "hide_header_editor": "If checked, hides the header editor when editing cells in the grid"
+    "hide_header_editor": "If checked, hides the header editor when editing cells in the grid",
+    "arcticdb": "Load data from a specific library & symbol in ArcticDB",
+    "jump_to_column": "For wide dataframes, you can shrink the columns displayed down to what is locked and a column selected from a dropdown."
   },
   "column_menu": {
     "Asc": "Asc",
@@ -124,7 +128,8 @@
     "Replacements": "Substituições",
     "Column Analysis": "Análise de Coluna.",
     "Variance Report": "Relatório de Variância",
-    "Formats": "Formatos"
+    "Formats": "Formatos",
+    "Duplicate": "Duplicar"
   },
   "builders": {
     "Type Conversion": "Conversão de Tipo",
@@ -192,6 +197,7 @@
     "Time": "Tempo",
     "Date": "Data",
     "Weekday": "Dia da semana",
+    "Weekday Name": "Weekday Name",
     "Month": "Mês",
     "Quarter": "Trimestre",
     "Year": "Ano",
@@ -790,7 +796,10 @@
     "Desc": "Desc",
     "None": "Nenhum",
     "navigate": "Usar botões ↑ ↓ para mudar colunas",
-    "Most Frequent": "Mais frequentes"
+    "Most Frequent": "Mais frequentes",
+    "Frequency":"Frequency",
+    "Percent": "Percent",
+    "TOTAL": "TOTAL"
   },
   "constants": {
     "Histogram": "Histograma",
@@ -825,7 +834,11 @@
     "Target": "Alvo",
     "Choose Col": "Escolha a Col",
     "Geometric Mean": "Geometric Mean",
-    "OHLC": "OHLC"
+    "OHLC": "OHLC",
+    "String Joiner": "String Joiner",
+    "Counts & Percentages": "Counts & Percentages",
+    "Frequency Table": "Frequency Table",
+    "Splits": "Splits"
   },
   "charts": {
     "Window": "Janela",
@@ -934,7 +947,8 @@
     "Invert Filter": "Inverter Filtro",
     "Move Filters To Custom": "Move Filters To Custom",
     "Hide Filtered Rows": "Hide Filtered Rows",
-    "Highlight Filtered Rows": "Highlight Filtered Rows"
+    "Highlight Filtered Rows": "Highlight Filtered Rows",
+    "ArcticDB": "ArcticDB"
   },
   "side": {
     "Close": "Fechar",
@@ -989,7 +1003,8 @@
   "corr_analysis": {
     "Keep": "Manter",
     "Column": "Coluna",
-    "Max Correlation w/ Other Columns": "Correlação máxima com outras colunas",
+    "Max Correlation": "Correlação máxima",
+    "w/ Other Columns": "com outras colunas",
     "Correlations": "Correlações",
     "Above Threshold": "Acima do Limiar",
     "Missing Rows": "Linhas em Falta",
@@ -1039,5 +1054,10 @@
     "html": "HTML",
     "html_js": "HTML w/ JS",
     "rows_desc": "Your dataset contains more than 10,000 rows. I would advise selecting a subset of rows (or editing your filters further).  Setting a value above will take the top N rows from your dataset."
+  },
+  "arcticdb": {
+    "Library": "Library",
+    "Symbol": "Symbol",
+    "Load": "Carregar"
   }
 }

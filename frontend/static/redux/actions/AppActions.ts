@@ -59,6 +59,11 @@ export enum ActionType {
   UPDATE_HIDE_SHUTDOWN = 'update-hide-shutdown',
   UPDATE_ALLOW_CELL_EDITS = 'update-allow-cell-edits',
   UPDATE_HIDE_HEADER_EDITOR = 'update-hide-header-editor',
+  UPDATE_LOCK_HEADER_MENU = 'update-lock-header-menu',
+  UPDATE_HIDE_HEADER_MENU = 'update-hide-header-menu',
+  UPDATE_HIDE_MAIN_MENU = 'update-hide-main-menu',
+  UPDATE_HIDE_COLUMN_MENUS = 'update-hide-column-menus',
+  UPDATE_ENABLE_CUSTOM_FILTERS = 'update-enable-custom-filters',
 }
 
 /** Action fired when a range is selected */
@@ -225,11 +230,36 @@ export interface UpdateHideShutdown extends Action<typeof ActionType.UPDATE_HIDE
 
 /** Action fired when updating the allow_cell_edits flag */
 export interface UpdateAllowCellEdits extends Action<typeof ActionType.UPDATE_ALLOW_CELL_EDITS> {
-  value: boolean;
+  value: boolean | string[];
 }
 
 /** Action fired when updating the hide_header_editor flag */
 export interface UpdateHideHeaderEditor extends Action<typeof ActionType.UPDATE_HIDE_HEADER_EDITOR> {
+  value: boolean;
+}
+
+/** Action fired when updating the lock_header_menu flag */
+export interface UpdateLockHeaderMenu extends Action<typeof ActionType.UPDATE_LOCK_HEADER_MENU> {
+  value: boolean;
+}
+
+/** Action fired when updating the hide_header_menu flag */
+export interface UpdateHideHeaderMenu extends Action<typeof ActionType.UPDATE_HIDE_HEADER_MENU> {
+  value: boolean;
+}
+
+/** Action fired when updating the hide_main_menu flag */
+export interface UpdateHideMainMenu extends Action<typeof ActionType.UPDATE_HIDE_MAIN_MENU> {
+  value: boolean;
+}
+
+/** Action fired when updating the hide_column_menus flag */
+export interface UpdateHideColumnMenus extends Action<typeof ActionType.UPDATE_HIDE_COLUMN_MENUS> {
+  value: boolean;
+}
+
+/** Action fired when updating the enable_custom_filters flag */
+export interface UpdateEnableCustomFilters extends Action<typeof ActionType.UPDATE_ENABLE_CUSTOM_FILTERS> {
   value: boolean;
 }
 
@@ -274,7 +304,12 @@ export type AppActionTypes =
   | SetRangeStateAction
   | UpdateHideShutdown
   | UpdateAllowCellEdits
-  | UpdateHideHeaderEditor;
+  | UpdateHideHeaderEditor
+  | UpdateLockHeaderMenu
+  | UpdateHideHeaderMenu
+  | UpdateHideMainMenu
+  | UpdateHideColumnMenus
+  | UpdateEnableCustomFilters;
 
 /** Type definition for redux application actions */
 export type AppActions<R> = ThunkAction<R, AppState, Record<string, unknown>, AnyAction>;

@@ -1,3 +1,4 @@
+import { createSelector } from '@reduxjs/toolkit';
 import * as React from 'react';
 import { withTranslation, WithTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -5,7 +6,8 @@ import { AnyAction } from 'redux';
 
 import { ActionType, SidePanelAction } from '../../redux/actions/AppActions';
 import * as settingsActions from '../../redux/actions/settings';
-import { AppState, InstanceSettings, SidePanelType } from '../../redux/state/AppState';
+import * as selectors from '../../redux/selectors';
+import { InstanceSettings, SidePanelType } from '../../redux/state/AppState';
 import { truncate } from '../../stringUtils';
 import { ColumnFilter, OutlierFilter } from '../DataViewerState';
 import * as gu from '../gridUtils';
@@ -19,7 +21,7 @@ export const Queries: React.FC<{ prop: string; filters: Record<string, OutlierFi
   filters,
   prop,
 }) => {
-  const dataId = useSelector((state: AppState) => state.dataId);
+  const dataId = useSelector(selectors.selectDataId);
   const dispatch = useDispatch();
   const updateSettings = (updatedSettings: Partial<InstanceSettings>): AnyAction =>
     dispatch(settingsActions.updateSettings(updatedSettings) as any as AnyAction);
@@ -56,19 +58,49 @@ export interface FilterDisplayProps {
   setMenuOpen: (menuOpen?: InfoMenuType) => void;
 }
 
+const selectResult = createSelector(
+  [
+    selectors.selectDataId,
+    selectors.selectPredefinedFilterConfigs,
+    selectors.selectHideDropRows,
+    selectors.selectInvertFilter,
+    selectors.selectQuery,
+    selectors.selectColumnFilters,
+    selectors.selectPredefinedFilters,
+    selectors.selectOutlierFilters,
+    selectors.selectSortInfo,
+    selectors.selectHighlightFilter,
+    selectors.selectIsArcticDB,
+  ],
+  (
+    dataId,
+    predefinedFilterConfigs,
+    hideDropRows,
+    invertFilter,
+    query,
+    columnFilters,
+    predefinedFilters,
+    outlierFilters,
+    sortInfo,
+    highlightFilter,
+    isArcticDB,
+  ) => ({
+    dataId,
+    predefinedFilterConfigs,
+    hideDropRows,
+    invertFilter: invertFilter ?? false,
+    query,
+    columnFilters: columnFilters ?? {},
+    predefinedFilters: predefinedFilters ?? {},
+    outlierFilters: outlierFilters ?? {},
+    sortInfo,
+    highlightFilter: highlightFilter ?? false,
+    isArcticDB,
+  }),
+);
+
 const FilterDisplay: React.FC<FilterDisplayProps & WithTranslation> = ({ menuOpen, setMenuOpen, t }) => {
-  const reduxState = useSelector((state: AppState) => ({
-    dataId: state.dataId,
-    predefinedFilterConfigs: state.predefinedFilters,
-    hideDropRows: state.hideDropRows,
-    invertFilter: state.settings.invertFilter ?? false,
-    query: state.settings.query,
-    columnFilters: state.settings.columnFilters ?? {},
-    predefinedFilters: state.settings.predefinedFilters ?? {},
-    outlierFilters: state.settings.outlierFilters ?? {},
-    sortInfo: state.settings.sortInfo,
-    highlightFilter: state.settings.highlightFilter ?? false,
-  }));
+  const reduxState = useSelector(selectResult);
   const dispatch = useDispatch();
   const updateSettings = (updatedSettings: Partial<InstanceSettings>): AnyAction =>
     dispatch(settingsActions.updateSettings(updatedSettings) as any as AnyAction);
@@ -165,7 +197,7 @@ const FilterDisplay: React.FC<FilterDisplayProps & WithTranslation> = ({ menuOpe
         onClick={clearFilter()}
         title={t('Clear Filters') ?? ''}
       />
-      {!reduxState.hideDropRows && (
+      {!reduxState.hideDropRows && !reduxState.isArcticDB && (
         <i
           className="fas fa-eraser pl-3 pointer"
           style={{ marginTop: '-0.1em' }}
@@ -182,7 +214,7 @@ const FilterDisplay: React.FC<FilterDisplayProps & WithTranslation> = ({ menuOpe
         onClick={toggleInvert}
         title={t('Invert Filter') ?? ''}
       />
-      {(!!Object.keys(columnFilters).length || !!Object.keys(outlierFilters).length) && (
+      {!reduxState.isArcticDB && (!!Object.keys(columnFilters).length || !!Object.keys(outlierFilters).length) && (
         <i
           className="fa fa-filter pl-3 pointer"
           style={{ marginTop: '-0.1em' }}
@@ -190,15 +222,17 @@ const FilterDisplay: React.FC<FilterDisplayProps & WithTranslation> = ({ menuOpe
           title={t('Move Filters To Custom') ?? ''}
         />
       )}
-      <i
-        className="fa-solid fa-highlighter pl-3 pointer"
-        style={{
-          marginTop: '-0.1em',
-          opacity: reduxState.highlightFilter ? 1 : 0.5,
-        }}
-        onClick={saveHighlightFilter}
-        title={t(reduxState.highlightFilter ? 'Hide Filtered Rows' : 'Highlight Filtered Rows') ?? ''}
-      />
+      {!reduxState.isArcticDB && (
+        <i
+          className="fa-solid fa-highlighter pl-3 pointer"
+          style={{
+            marginTop: '-0.1em',
+            opacity: reduxState.highlightFilter ? 1 : 0.5,
+          }}
+          onClick={saveHighlightFilter}
+          title={t(reduxState.highlightFilter ? 'Hide Filtered Rows' : 'Highlight Filtered Rows') ?? ''}
+        />
+      )}
     </>
   );
 
@@ -206,7 +240,7 @@ const FilterDisplay: React.FC<FilterDisplayProps & WithTranslation> = ({ menuOpe
     return (
       <>
         {label}
-        <div className="pl-3 d-inline-block filter-menu-toggle">{removeBackticks(filterSegs[0] ?? '')}</div>
+        <div className="pl-3 d-inline-block filter-menu-toggle info-link">{removeBackticks(filterSegs[0] ?? '')}</div>
         {allButtons}
       </>
     );
