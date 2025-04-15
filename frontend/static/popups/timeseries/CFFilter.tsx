@@ -95,7 +95,7 @@ const CFFilter: React.FC<BaseComponentProps<CFConfig> & WithTranslation> = ({ cf
           value={low}
           setter={(value) => setLow(Number(value))}
           inputOptions={{ onKeyDown }}
-          subLabel="(Press ENTER to submit)"
+          subLabel={t('(Press ENTER to submit)', { ns: 'timeseries' })}
           tooltip={t(`low_desc`, { ns: 'timeseries' })}
         />
       </div>
@@ -105,7 +105,7 @@ const CFFilter: React.FC<BaseComponentProps<CFConfig> & WithTranslation> = ({ cf
           value={high}
           setter={(value) => setHigh(Number(value))}
           inputOptions={{ onKeyDown }}
-          subLabel="(Press ENTER to submit)"
+          subLabel={t('(Press ENTER to submit)', { ns: 'timeseries' })}
           tooltip={t(`high_desc`, { ns: 'timeseries' })}
         />
       </div>

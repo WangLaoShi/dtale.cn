@@ -1,6 +1,12 @@
 *.pyc
 *.egg-info
 
+# python virtual environment
+venv/
+
+# python test output files
+.pytest_cache/
+
 # test output files
 .cache
 .coverage

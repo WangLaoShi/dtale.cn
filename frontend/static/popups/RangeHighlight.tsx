@@ -189,7 +189,7 @@ const RangeHighlight: React.FC<WithTranslation> = ({ t }) => {
   return (
     <div key="body" className="modal-body">
       <ColumnSelect
-        label="Col"
+        label={t("Col", { ns: 'column_filter' })}
         prop="col"
         parent={{ col }}
         updateState={(state): void => {

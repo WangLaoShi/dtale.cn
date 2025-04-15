@@ -747,7 +747,7 @@ def build_error(error, tb):
     return html.Div(
         [
             html.I(className="ico-error"),
-            html.Span(str(error)),
+            html.Span(text(str(error))),
             html.Div(html.Pre(str(tb)), className="traceback"),
         ],
         className="dtale-alert alert alert-danger",
@@ -1756,7 +1756,7 @@ def charts_layout(df, settings, **inputs):
                             dcc.Dropdown(
                                 id="load-type-dropdown",
                                 options=[
-                                    build_option(v, v.capitalize()) for v in LOAD_TYPES
+                                    build_option(v, text(v.capitalize())) for v in LOAD_TYPES
                                 ],
                                 className="pl-5",
                                 value=load_type or "random",
@@ -1767,6 +1767,7 @@ def charts_layout(df, settings, **inputs):
                                 options=stratified_groups,
                                 value=stratified_group,
                                 clearable=False,
+                                placeholder=text("Select"),
                                 style=(
                                     {}
                                     if load_type == "stratified"

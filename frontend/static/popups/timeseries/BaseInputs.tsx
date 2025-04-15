@@ -78,6 +78,7 @@ const BaseInputs: React.FC<BaseInputProps & WithTranslation> = ({ columns, cfg, 
           value={agg}
           onChange={(selected) => setAgg(selected as BaseOption<string>)}
           isClearable={true}
+          placeholder={t('Select', { ns: 'main' })}
         />
       </div>
     </>

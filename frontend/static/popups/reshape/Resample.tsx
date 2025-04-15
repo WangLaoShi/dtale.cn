@@ -98,7 +98,7 @@ const Resample: React.FC<ResampleProps & WithTranslation> = ({ namePopulated, up
           <small>
             {t('Examples of pandas offset aliases found ')}
             <a href={OFFSET_URL} rel="noopener noreferrer" target="_blank">
-              here
+            {t('here')}
             </a>
           </small>
         </div>
@@ -108,6 +108,7 @@ const Resample: React.FC<ResampleProps & WithTranslation> = ({ namePopulated, up
         options={resampleAggs}
         value={agg}
         onChange={(value) => setAgg(value as BaseOption<string>)}
+        placeholder={t('Select', { ns: 'main' })}
       />
     </React.Fragment>
   );

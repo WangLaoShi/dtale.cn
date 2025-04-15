@@ -86,7 +86,7 @@ const HPFilter: React.FC<BaseComponentProps<HPConfig> & WithTranslation> = ({ cf
         value={lamb}
         setter={(value) => setLamb(Number(value))}
         inputOptions={{ onKeyDown }}
-        subLabel="(Press ENTER to submit)"
+        subLabel={t('(Press ENTER to submit)', { ns: 'timeseries' })}
         tooltip={t(`lamb_desc`, { ns: 'timeseries' })}
       />
     </div>

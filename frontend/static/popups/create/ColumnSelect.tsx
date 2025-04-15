@@ -98,6 +98,7 @@ export const BaseColumnSelectInput: React.FC<ColumnSelectInputProps & WithTransl
         isClearable={true}
         filterOption={createFilter({ ignoreAccents: false })} // required for performance reasons!
         noOptionsMessage={() => `${t('No columns available')}${dtypesStr}!`}
+        placeholder={t('Select', { ns: 'main' })}
       />
       {isMulti && selectAll && columnOptions.length > (parent[prop] ?? []).length && (
         <button

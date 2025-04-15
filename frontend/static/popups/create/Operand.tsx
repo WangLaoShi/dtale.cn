@@ -59,6 +59,7 @@ const Operand: React.FC<OperandProps & WithTranslation> = ({
             noOptionsMessage={() => t('No columns found')}
             isClearable={true}
             filterOption={createFilter({ ignoreAccents: false })} // required for performance reasons!
+            placeholder={t('Select', { ns: 'main' })}
           />
         </div>
       );
@@ -80,7 +81,7 @@ const Operand: React.FC<OperandProps & WithTranslation> = ({
     <div className="form-group row" data-testid={`${name}-inputs`}>
       <div className="col-md-3 text-right">
         <ButtonToggle
-          options={Object.values(OperandDataType).map((value) => ({ value, label: capitalize(value) }))}
+          options={Object.values(OperandDataType).map((value) => ({ value, label: t(capitalize(value)) }))}
           update={(value?: OperandDataType) => updateState({ type: value })}
           defaultValue={cfg.type}
           compact={false}

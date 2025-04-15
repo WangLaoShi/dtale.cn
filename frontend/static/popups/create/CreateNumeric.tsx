@@ -100,7 +100,7 @@ const CreateNumeric: React.FC<BaseCreateComponentProps & WithTranslation> = ({ c
         <label className="col-md-3 col-form-label text-right">{t('Operation')}</label>
         <div className="col-md-8">
           <ButtonToggle
-            options={Object.values(NumericOperationType).map((value) => ({ value, label: capitalize(value) }))}
+            options={Object.values(NumericOperationType).map((value) => ({ value, label: t(capitalize(value)) }))}
             update={setOperation}
             defaultValue={operation}
             compact={false}

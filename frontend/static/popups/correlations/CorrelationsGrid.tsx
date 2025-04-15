@@ -174,6 +174,7 @@ const CorrelationsGrid: React.FC<CorrelationsGridProps & WithTranslation> = ({ c
           noOptionsMessage={() => t('No columns found', { ns: 'correlations' })}
           isClearable={true}
           filterOption={createFilter({ ignoreAccents: false })} // required for performance reasons!
+          placeholder={t('Select', { ns: 'main' })}
         />
       </div>
     );

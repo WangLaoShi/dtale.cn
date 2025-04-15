@@ -99,6 +99,7 @@ const Pivot: React.FC<BaseReshapeComponentProps & WithTranslation> = ({ updateSt
         options={pivotAggs}
         value={func}
         onChange={(selected) => setFunc(selected as BaseOption<string>)}
+        placeholder={t('Select', { ns: 'main' })}
       />
     </React.Fragment>
   );

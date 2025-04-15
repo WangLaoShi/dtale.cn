@@ -14,5 +14,8 @@ for filename in _os.listdir(_basepath):
 
 
 def text(key):
+    # 从全局设置中获取当前设置的语言（例如 'cn' 或 'en'）
     curr_lang = global_state.get_app_settings()["language"]
+    # 从 _languages 字典中获取当前语言的翻译映射
+    # 如果找不到对应的翻译，则返回原始的 key
     return _languages.get(curr_lang, {}).get(key) or key

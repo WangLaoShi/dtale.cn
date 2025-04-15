@@ -194,8 +194,8 @@ const Aggregate: React.FC<BaseReshapeComponentProps & WithTranslation> = ({ colu
         <div className="col-md-3 text-right mb-auto mt-3">
           <ButtonToggle
             options={[
-              { value: AggregationOperationType.COL, label: 'By Column' },
-              { value: AggregationOperationType.FUNC, label: 'By Function' },
+              { value: AggregationOperationType.COL, label: t('By Column') },
+              { value: AggregationOperationType.FUNC, label: t('By Function') },
             ]}
             update={setType}
             defaultValue={type}
@@ -217,13 +217,20 @@ const Aggregate: React.FC<BaseReshapeComponentProps & WithTranslation> = ({ colu
                       isMulti={false}
                       isClearable={true}
                       ref={currentColRef}
+                      placeholder={t('Select', { ns: 'main' })}
                     />
                   </div>
                 </div>
                 <div className="col-md-7 pl-0">
                   <div className="input-group">
                     <span className="pt-4 mr-4">{t('Agg')}:</span>
-                    <DtaleSelect options={aggregateAggs} isClearable={true} isMulti={true} ref={currentAggRef} />
+                    <DtaleSelect 
+                      options={aggregateAggs} 
+                      isClearable={true} 
+                      isMulti={true} 
+                      ref={currentAggRef} 
+                      placeholder={t('Select', { ns: 'main' })}
+                    />
                     <i className="ico-add-circle pointer mt-auto mb-auto ml-4" onClick={addAgg} />
                   </div>
                 </div>
@@ -259,6 +266,7 @@ const Aggregate: React.FC<BaseReshapeComponentProps & WithTranslation> = ({ colu
                     value={func}
                     onChange={(selected) => setFunc(selected as BaseOption<string>)}
                     isClearable={true}
+                    placeholder={t('Select', { ns: 'main' })}
                   />
                 </div>
               </div>
@@ -271,6 +279,7 @@ const Aggregate: React.FC<BaseReshapeComponentProps & WithTranslation> = ({ colu
                     onChange={(selected) => setFuncCols(selected as Array<BaseOption<string>>)}
                     isMulti={true}
                     isClearable={true}
+                    placeholder={t('Select', { ns: 'main' })}
                   />
                 </div>
               </div>
