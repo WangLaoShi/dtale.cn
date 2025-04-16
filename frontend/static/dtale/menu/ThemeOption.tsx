@@ -24,7 +24,7 @@ const ReactThemeOption: React.FC<RibbonOptionProps & WithTranslation> = ({ ribbo
       <span className="toggler-action">
         <i className="fas fa-adjust" />
       </span>
-      <span className="font-weight-bold pl-2">Theme</span>
+      <span className="font-weight-bold pl-2">{t('Theme')}</span>
       <div className="btn-group compact ml-auto mr-3 font-weight-bold column-sorting">
         {Object.values(ThemeType).map((value) => (
           <button

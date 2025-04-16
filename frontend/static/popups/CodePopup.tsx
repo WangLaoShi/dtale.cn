@@ -12,7 +12,8 @@ import { JSAnchor } from '../JSAnchor';
 
 require('./CodePopup.css');
 
-export const renderCodePopupAnchor = (code: string, title: string): JSX.Element => {
+// 将函数组件改为支持国际化的组件
+export const CodePopupAnchor: React.FC<{ code: string; title: string } & WithTranslation> = ({ code, title, t }) => {
   const onClick = (): void => {
     (window as any).code_popup = { code, title };
     menuFuncs.open('/dtale/code-popup', undefined, 450, 700);
@@ -20,9 +21,15 @@ export const renderCodePopupAnchor = (code: string, title: string): JSX.Element 
   return (
     <JSAnchor onClick={onClick}>
       <i className="ico-code pr-3" />
-      <span>Code Export</span>
+      <span>{t('Code Export', { ns: 'code_export' })}</span>
     </JSAnchor>
   );
+};
+
+// 为了保持向后兼容，保留原来的函数，但内部使用新的组件
+export const renderCodePopupAnchor = (code: string, title: string): JSX.Element => {
+  const TranslatedAnchor = withTranslation('popup')(CodePopupAnchor);
+  return <TranslatedAnchor code={code} title={title} />;
 };
 
 /** Component properties for CodePopup */
@@ -36,7 +43,7 @@ const CodePopup: React.FC<CodePopupProps & WithTranslation> = ({ code, t }) => {
       const buttonBuilder = (props: ButtonBuilderProps): JSX.Element => (
         <button className="btn btn-primary" {...props}>
           <i className="far fa-copy pr-3" />
-          <span>{t('Copy')}</span>
+          <span>{t('Copy', { ns: 'code_export' })}</span>
         </button>
       );
       return (

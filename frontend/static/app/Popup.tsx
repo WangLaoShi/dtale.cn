@@ -14,7 +14,7 @@ import FilterPopup from '../popups/filter/FilterPopup';
 import Instances from '../popups/instances/Instances';
 import MergeDatasets from '../popups/merge/MergeDatasets';
 import PredictivePowerScore from '../popups/pps/PredictivePowerScore';
-import { RawPandasOutput } from '../popups/RawPandasOutput';
+import RawPandasOutput from '../popups/RawPandasOutput';
 import CreateReplacement from '../popups/replacement/CreateReplacement';
 import Reshape from '../popups/reshape/Reshape';
 import Upload from '../popups/upload/Upload';

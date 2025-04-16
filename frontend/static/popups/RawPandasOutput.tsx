@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { WithTranslation, withTranslation } from 'react-i18next';
 
 import { BouncerWrapper } from '../BouncerWrapper';
 import ButtonToggle from '../ButtonToggle';
@@ -13,7 +14,7 @@ const FUNC_LABELS: Record<FuncType, string> = {
   [FuncType.DESCRIBE]: 'df.describe().T',
 };
 
-export const RawPandasOutput: React.FC = () => {
+const RawPandasOutput: React.FC<WithTranslation> = ({ t }) => {
   const dataId = useAppSelector(selectDataId);
   const [funcType, setFuncType] = React.useState<FuncType>(FuncType.INFO);
   const [error, setError] = React.useState<JSX.Element>();
@@ -44,7 +45,7 @@ export const RawPandasOutput: React.FC = () => {
   return (
     <div key="body" className="modal-body">
       <div className="form-group row mb-4">
-        <label className="col-auto col-form-label text-right p-0">Function</label>
+        <label className="col-auto col-form-label text-right p-0">{t('Function')}</label>
         <div className="col-md-8 pl-0">
           <ButtonToggle
             options={Object.values(FuncType).map((value) => ({ value, label: FUNC_LABELS[value] }))}
@@ -56,7 +57,7 @@ export const RawPandasOutput: React.FC = () => {
         </div>
         {!!output && (
           <div style={{ textAlign: 'right' }} className="col">
-            <label className="col-auto col-form-label text-right p-0">Zoom</label>
+            <label className="col-auto col-form-label text-right p-0">{t('Zoom')}</label>
             <i className="fa-solid fa-magnifying-glass-plus pointer pl-5" onClick={() => setFontSize(fontSize + 1)} />
             <label className="col-auto col-form-label text-right pr-3 pl-3">|</label>
             <i className="fa-solid fa-magnifying-glass-minus pointer" onClick={() => setFontSize(fontSize - 1)} />
@@ -74,3 +75,5 @@ export const RawPandasOutput: React.FC = () => {
     </div>
   );
 };
+
+export default withTranslation('popup')(RawPandasOutput);

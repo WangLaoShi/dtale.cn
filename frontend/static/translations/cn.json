@@ -404,6 +404,12 @@
   "upload": {
     "Load File": "加载文件",
     "URL": "URL",
+    "Web uploads are currently disabled. This feature is only for trusted environments, in order to unlock this feature you must do one of the following:": "网络上传当前已禁用。此功能仅适用于受信任的环境，要解锁此功能，您必须执行以下操作之一：",
+    "add":"添加",
+    " to your ":"到您的",
+    " call":"调用",
+    "run this code before calling ":"在调用之前运行此代码",
+    " to the [app] section of your dtale.ini config file":"到您的dtale.ini配置文件的[app]部分",
     "Drop data files here to upload, or click to select files": "将数据文件放在这里上传，或点击选择文件。",
     "Loading File": "正在加载文件",
     "Load From The Web": "从网络加载",
@@ -825,7 +831,7 @@
   "constants": {
     "Histogram": "直方图",
     "Value Counts": "值计数",
-    "Describe": "描述",
+    "Describe": "数据统计描述",
     "Categories": "类别",
     "Word Value Counts": "词值计数",
     "Geolocation": "地理位置",

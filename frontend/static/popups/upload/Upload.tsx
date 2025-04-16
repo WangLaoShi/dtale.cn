@@ -27,10 +27,13 @@ const DATASET_LABELS: { [key in Dataset]: string } = {
   [Dataset.TIME_DATAFRAME]: 'makeTimeDataFrame',
 };
 
-export const DISABLED_URL_UPLOADS_MSG = [
-  'Web uploads are currently disabled.  This feature is only for trusted environments, in order to unlock this ',
-  'feature you must do one of the following:',
-].join('');
+// 为了保持向后兼容性，保留常量但使用默认的英文文本
+export const DISABLED_URL_UPLOADS_MSG = 'Web uploads are currently disabled. This feature is only for trusted environments, in order to unlock this feature you must do one of the following:';
+
+// 将常量改为函数，接受翻译函数作为参数
+export const getDisabledUrlUploadsMsg = (t: (key: string) => string): string => {
+  return t('Web uploads are currently disabled. This feature is only for trusted environments, in order to unlock this feature you must do one of the following:');
+};
 
 /** Component properties for Upload */
 interface UploadProps {
@@ -168,17 +171,17 @@ const Upload: React.FC<UploadProps & WithTranslation> = ({ mergeRefresher, t }) 
         <div className="form-group row">
           <div className="col-md-2 p-0" />
           <div className="col-md-8 col-form-label text-left">
-            <label>{DISABLED_URL_UPLOADS_MSG}</label>
+            <label>{getDisabledUrlUploadsMsg(t)}</label>
             <ul>
               <li>
-                {`add `}
+                {t('add')}{' '}
                 <code>enable_web_uploads=True</code>
-                {` to your `}
+                {t(' to your ')}
                 <code className="font-weight-bold">dtale.show</code>
-                {` call`}
+                {t(' call')}
               </li>
               <li>
-                {`run this code before calling `}
+                {t('run this code before calling ')}
                 <code className="font-weight-bold">dtale.show</code>
                 <pre>
                   {`import dtale.global_state as global_state\n`}
@@ -186,9 +189,9 @@ const Upload: React.FC<UploadProps & WithTranslation> = ({ mergeRefresher, t }) 
                 </pre>
               </li>
               <li>
-                {`add `}
+                {t('add')}{' '}
                 <code>enable_web_uploads = True</code>
-                {` to the [app] section of your dtale.ini config file`}
+                {t(' to the [app] section of your dtale.ini config file')}
               </li>
             </ul>
           </div>
